@@ -81,25 +81,6 @@ Param.buildingHeight = [20,50];% Double interval used to specify the height inte
 Param.area = [min(Param.buildings(:, 1)), min(Param.buildings(:, 2)), ...
 	max(Param.buildings(:, 3)), max(Param.buildings(:, 4))];
 Param.buildings(:,5) = randi([Param.buildingHeight],[1 length(Param.buildings(:,1))]);
-
-% Get traffic source data and check if we have already the MAT file with the traffic data
-switch Param.trafficModel
-	case 'videoStreaming'
-		if (exist('traffic/videoStreaming.mat', 'file') ~= 2 || Param.reset)
-			Param.trSource = loadVideoStreamingTraffic('traffic/videoStreaming.csv', true);
-		else
-			traffic = load('traffic/videoStreaming.mat');
-            Param.trSource = traffic.trSource;
-            clear traffic
-		end
-	case 'fullBuffer'
-		if (exist('traffic/fullBuffer.mat', 'file') ~= 2 || Param.reset)
-			Param.trSource = loadFullBufferTraffic('traffic/fullBuffer.csv');
-		else
-			traffic = load('traffic/fullBuffer.mat');
-            Param.trSource = traffic.trSource;
-            clear traffic
-		end
-end
+Param.trafficServerPosition = [0 300 0];
 
 save('SimulationParameters.mat', 'Param');

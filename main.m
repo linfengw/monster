@@ -43,12 +43,15 @@ Channel = ChBulk_v2(Param);
 % Create channel estimator
 ChannelEstimator = createChannelEstimator();
 
+% Create traffic generator
+TrafficNode = TrafficGenerator(Param);
+
 % Utilisation ranges
 utilLo = 1:Param.utilLoThr;
 utilHi = Param.utilHiThr:100;
 
 % Create struct to pass data to the simulation function
-simData = struct('trSource', Param.trSource, 'Stations', Stations, 'Users', Users,...
+simData = struct('TrafficNode', TrafficNode, 'Stations', Stations, 'Users', Users,...
 	'Channel', Channel, 'ChannelEstimator', ChannelEstimator);
 
 % if set, clean the results folder
@@ -66,7 +69,6 @@ status = [
 	"boot"];
 
 % Main loop
-
 for iUtilLo = 1: length(utilLo)
 	for iUtilHi = 1:length(utilHi)
 		simulate(Param, simData, utilLo(iUtilLo), utilHi(iUtilHi));

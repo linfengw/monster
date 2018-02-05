@@ -8,7 +8,7 @@ function simulate(Param, DataIn, utilLo, utilHi)
 %   utilLo		-> 	value of low utilisation for this simulation
 %		utilHi		->	value for high utilisation for this simulation
 
-trSource = DataIn.trSource;
+TrafficNode = DataIn.TrafficNode;
 Stations = DataIn.Stations;
 Users = DataIn.Users;
 Channel = DataIn.Channel;
@@ -57,7 +57,7 @@ for iRound = 0:(Param.schRounds-1)
 	
 	% Update RLC transmission queues for the users and reset the scheduled flag
 	for iUser = 1:length(Users)
-		queue = updateTrQueue(trSource, simTime, Users(iUser));
+		queue = updateTrQueue(TrafficNode.Source, simTime, Users(iUser));
 		Users(iUser) = setQueue(Users(iUser), queue);
 	end
 	

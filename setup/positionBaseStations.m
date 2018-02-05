@@ -22,7 +22,6 @@ function [macroPos, microPos, h] = positionBaseStations (maBS, miBS, Param)
   % Draw grid
   if Param.draw
       h = figure;
-      %rectangle('Position',area)
       set(gca, 'XTick', []);
       set(gca, 'YTick', []);
       hold on
@@ -34,24 +33,24 @@ function [macroPos, microPos, h] = positionBaseStations (maBS, miBS, Param)
           rectangle('Position',[x0 y0 x y],'FaceColor',[0.9 .9 .9])
       end
 
-      % Plot 3d manhattan grid.
-      %h2 = figure;
-      %set(gca, 'XTick', []);
-      %set(gca, 'YTick', []);
-      %set(gca,'Visible','off')
-      %hold on
-      %for i = 1:length(buildings(:,1))
+      % % Plot 3d manhattan grid.
+      % h = figure;
+      % set(gca, 'XTick', []);
+      % set(gca, 'YTick', []);
+      % set(gca,'Visible','off')
+      % hold on
+      % for i = 1:length(buildings(:,1))
       %   x0 = buildings(i,1);
       %   y0 = buildings(i,2);
-      %   x = buildings(i,3);
-      %   y = buildings(i,4);
+      %   x = buildings(i,3) -x0;
+      %   y = buildings(i,4) -y0;
       %   z = buildings(i,5);
       %   verts = [x0 y0 0; x y0 0; x y 0; x0 y 0;
       %             x0 y0 z; x y0 z; x y z; x0 y z];
       %   fac = [1 2 3 4; 2 3 7 6; 1 2 6 5; 4 3 7 8;
       %             5 8 7 6; 1 4 8 5];
       %   patch('Vertices',verts,'Faces',fac,'FaceColor',[0.9 .9 .9])
-      %end
+      % end
 	else
 		h = [];
 	end
