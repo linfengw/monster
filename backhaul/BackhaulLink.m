@@ -1,27 +1,27 @@
 %   BackhaulLink defines a value class for the core network
 
 classdef BackhaulLink
-	%   BackhaulLink 
+	%   Backhaul lLink 
 	properties
-		MediaType;
-		Capacity;
-		Latency;
+		Id;
 		Technology;
-		LinkStatus;
+		Capacity;
+		Status;
+		Length;
 	end
 	
 	methods
 		% Constructor
-		function obj = BackhaulLink(Param)
-			obj.MediaType = Param.backhaul.MediaType;
-			obj.Capacity = Param.backhaul.Capacity;
-			obj.Latency = Param.backhaul.Latency;
-			obj.Technology = Param.backhaul.Technology;
-			obj.LinkStatus = 1;
+		function obj = BackhaulLink(id, tech, cp, status, len)
+			obj.Id = id;
+			obj.Technology = tech;
+			obj.Capacity = cp;
+			obj.Status = status;
+			obj.Length = len;
 		end
 
-		% Send packet
-		function obj = sendPacket(obj, pkt)
+		% Propagate a signal
+		function obj = propagate(obj, sig)
 			
 		end
 		

@@ -38,10 +38,6 @@ else
 	load('utils/heatmap/HeatMap_eHATA_fBS_pos_5m_res');
 end
 
-% if Param.draw
-% 	drawHeatMap(HeatMap, Stations);
-% end
-
 % Rounds are 0-based for the subframe indexing, so add 1 when needed
 for iRound = 0:(Param.schRounds-1)
 	% In each scheduling round, check UEs associated with each station and
