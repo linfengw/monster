@@ -22,6 +22,7 @@ classdef BackhaulRx
 
 		% Receive signal
 		function obj = receiveSignal(obj, sig)
+			
 		end
 	end
 	
