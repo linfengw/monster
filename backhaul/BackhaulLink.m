@@ -4,6 +4,8 @@ classdef BackhaulLink
 	%   Backhaul lLink 
 	properties
 		Id;
+		Transmitter = struct('Id', -1, 'Position', []);
+		Receiver = struct('Id', -1, 'Position', []);
 		Technology;
 		Capacity;
 		Status;
@@ -14,13 +16,26 @@ classdef BackhaulLink
 	
 	methods
 		% Constructor
-		function obj = BackhaulLink(id, tech, cp, status, len)
+		function obj = BackhaulLink(id, tech, cp, status, tx, rx)
 			obj.Id = id;
+			obj.Transmitter = tx;
+			obj.Receiver = rx;
 			obj.Technology = tech;
 			obj.Capacity = cp;
 			obj.Status = status;
-			obj.Length = len;
+			obj.Length = calculateLinkLength(obj);
 			obj.ProcessingDelay = 0;
+		end
+
+		% Utility for link length
+		function obj = calculateLinkLength(obj)
+			if ~isempty(obj.Transmitter.Position) && ~isempty(obj.Receiver.Position)
+				obj.Length = sqrt(...
+					pow2(obj.Receiver.Position(1) - obj.Transmitter.Position(1)) + ...
+					pow2(obj.Receiver.Position(2) - obj.Transmitter.Position(2)));
+			else
+				sonohilog('Transmitter and receiver in link must have a defined position', 'ERR')
+			end 
 		end
 
 		% Used to receive a signal from a transmitter and add it to the TxQueue

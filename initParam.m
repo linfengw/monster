@@ -36,6 +36,8 @@ Param.buildings = 'mobility/buildings.txt';% Path for loading the file with the 
 Param.trafficModel = 'fullBuffer';% Traffic model
 Param.pucchFormat = 2;% PUCCH format (only 2 and 3 work)
 Param.handoverTimer = 0.01;% X2 Handover timer in s (time needed from starting and handover to its completion)
+Param.backahulTechnology = 'fibre'; % fibre, copper, radio
+Param.backhaulType = 'full'; % full, s1only, microDaisy
 %% Physical layer
 Param.ulFreq = 1747.5;% Double used for the uplink carrier frequency in MHz
 Param.dlFreq = 1842.5;% Double used for the downlink carrier frequency in MHz
