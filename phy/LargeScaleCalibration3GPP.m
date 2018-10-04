@@ -18,3 +18,18 @@ aaSector3 = AntennaArray([1, 1, 10, 1, 1], 270, 102);
 
 elements = aaSector1.Panels{1};
 elements{1}.plotPattern()
+
+theta = -90:210;
+phi = -180:180;
+figure
+plot(phi,elements{1}.get3DGain(90,phi))
+xlabel('Elevation (degrees)')
+ylabel('Antenna gain (dB)')
+
+figure
+plot(theta,elements{1}.get3DGain(theta,-30))
+hold on
+plot(theta,elements{1}.get3DGain(theta,0))
+plot(theta,elements{1}.get3DGain(theta,60))
+xlabel('Azimuth (degrees)')
+ylabel('Antenna gain (dB)')
