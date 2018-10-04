@@ -71,7 +71,7 @@ classdef AntennaElement < handle
         
         function Av = Avertical(obj,theta)
             % Compute vertical radiation pattern
-            Av = -1*(min([12*((theta-(90-obj.tilt))/obj.theta3db).^2,obj.SLAv]));
+            Av = -1*(min([12*((theta-(obj.tilt))/obj.theta3db).^2,obj.SLAv]));
         end
         
         function Ah = Ahorizontal(obj,phi)
