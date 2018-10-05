@@ -14,7 +14,7 @@ classdef sonohiBase < handle
 		end
 
 		function obj = setup(obj, ~, ~, ~)
-			% pass
+			sonohilog(sprintf('No setup method detected on chosen model %s',obj.Chtype),'ERR');
 		end
 		
 		function [stations,users] = run(obj,Stations,Users,varargin)
@@ -106,7 +106,9 @@ classdef sonohiBase < handle
 			% returns updated RxPwdBm of RxNode.Rx
 			[lossdB, RxNode] = obj.computePathLoss(TxNode, RxNode);
 			EIRPdBm = TxNode.Tx.getEIRPdBm;
-			rxPwdBm = EIRPdBm-lossdB-RxNode.Rx.NoiseFigure; %dBm
+			AntennaGains = TxNode.Tx.AntennaArray.getAntennaGains(TxNode.Position, RxNode.Position);
+			
+			rxPwdBm = EIRPdBm-lossdB+RxNode.Rx.NoiseFigure-AntennaGains{1}; %dBm
 			RxNode.Rx.RxPwdBm = rxPwdBm;
 			
 		end

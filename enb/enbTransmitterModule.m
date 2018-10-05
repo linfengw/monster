@@ -14,6 +14,7 @@ classdef enbTransmitterModule
     Gain;
     PssRef;
     SssRef;
+		AntennaArray;
   end
   
   methods
@@ -28,6 +29,7 @@ classdef enbTransmitterModule
 			obj = setBCH(obj, enb);
 			obj = resetResourceGrid(obj, enb);
 			obj = initPDSCH(obj, enb.NDLRB);
+			obj.AntennaArray = AntennaArray([1, 1, 1, 1, 1], 30, 120);
 			[obj.Frame, obj.FrameInfo, obj.FrameGrid] = generateDummyFrame(enb);
     end
     
@@ -36,6 +38,11 @@ classdef enbTransmitterModule
       EIRPSubcarrier = obj.getEIRP()/size(obj.ReGrid,1);
 		end
 		
+		function obj = setDummyFrame(obj)
+			obj.Waveform = obj.Frame;
+			obj.WaveformInfo = obj.FrameInfo;
+			obj.ReGrid = obj.FrameGrid;
+		end
     
     function EIRP = getEIRP(obj)
       % Returns EIRP in Watts

@@ -9,13 +9,13 @@ Param.numUsers = 1;
 
 Param.channel.enableInterference = false;
 Param.channel.enableFading = false;
-Param.channel.enableShadowing = true;
-Param.channel.LOSMethod = '3GPP38901-probability';
+Param.channel.enableShadowing = false;
+Param.channel.LOSMethod = 'NLOS';
 Param.channel.modeDL = '3GPP38901';
-Param.area = [-1000, -1000, 1000, 1000];
+Param.area = [-3000, -3000, 3000, 3000];
 Param.channel.region = struct();
 Param.channel.region.macroScenario = 'UMa';
-Param.mobilityScenario = 'pedestrian-indoor';
+Param.mobilityScenario = 'pedestrian';
 
 
 if Param.draw
@@ -25,6 +25,9 @@ end
 
 % Create Stations and Users
 [Station, Param] = createBaseStations(Param);
+
+
+
 User = createUsers(Param);
 
 % Create Channel scenario
@@ -44,8 +47,15 @@ Station.Tx.Waveform = Station.Tx.Frame;
 Station.Tx.WaveformInfo = Station.Tx.FrameInfo;
 Station.Tx.ReGrid = Station.Tx.FrameGrid;
 
+StationS1 = Station;
+StationS1.Tx.AntennaArray.Bearing = 30;
+StationS2 = Station;
+StationS2.Tx.AntennaArray.Bearing = 150;
+StationS3 = Station;
+StationS3.Tx.AntennaArray.Bearing = 270;
+
 % Traverse channel
-[~, User] = ChannelUMa.traverse(Station,User,'downlink');
+[~, User] = ChannelUMa.traverse(StationS1,User,'downlink');
 
 % Get offset
 User.Rx.Offset = lteDLFrameOffset(Station, User.Rx.Waveform);
@@ -65,7 +75,7 @@ User.Rx = User.Rx.referenceMeasurements(Station);
 setpref('sonohiLog','logLevel', 4);
 Station.Position(1:2) = [0, 0];
 % Set up coordinates of UE
-sweepRes = 20; %1m
+sweepRes = 200; %1m
 
 % Get area size
 lengthXY = [Param.area(1):sweepRes:Param.area(3); Param.area(2):sweepRes:Param.area(4)];
@@ -88,6 +98,7 @@ for Xpos = 1:length(lengthXY(1,:))
         end
         
         resultsUMa{Xpos,Ypos} = ueUMa.Rx.ChannelConditions;
+				resultsUMa{Xpos,Ypos}.RxPw = ueUMa.Rx.RxPwdBm;
         resultsRMa{Xpos,Ypos} = ueRMa.Rx.ChannelConditions;
         counter = counter +1;
         
@@ -97,27 +108,37 @@ end
 %% Create visualization vectors/matrices
 
 UMaResultsLOS = nan(N,N);
+UMaResultsRxPw = nan(N,N);
 UMaResultsPL = nan(N,N);
-UMaResultsLSP = nan(N,N);
 UMaResultsLOSprop = nan(N,N);
-
 RMaResultsLOS = nan(N,N);
 RMaResultsPL = nan(N,N);
-RMaResultsLSP = nan(N,N);
 RMaResultsLOSprop = nan(N,N);
+
+if Param.channel.enableShadowing
+	UMaResultsLSP = nan(N,N);
+	RMaResultsLSP = nan(N,N);
+end
+
 for Xpos = 1:length(lengthXY(1,:))
     
     for Ypos = 1:length(lengthXY(2,:))
         
         UMaResultsLOS(Xpos,Ypos) = resultsUMa{Xpos,Ypos}.LOS;
+		UMaResultsRxPw(Xpos,Ypos) = resultsUMa{Xpos,Ypos}.RxPw;
         UMaResultsPL(Xpos,Ypos) = resultsUMa{Xpos,Ypos}.pathloss;
-        UMaResultsLSP(Xpos,Ypos) = resultsUMa{Xpos,Ypos}.LSP;
+		
         UMaResultsLOSprop(Xpos,Ypos) = resultsUMa{Xpos,Ypos}.LOSprop;
         
         RMaResultsLOS(Xpos,Ypos) = resultsRMa{Xpos,Ypos}.LOS;
         RMaResultsPL(Xpos,Ypos) = resultsRMa{Xpos,Ypos}.pathloss;
+		RMaResultsLOSprop(Xpos,Ypos) = resultsRMa{Xpos,Ypos}.LOSprop;
+		
+		if Param.channel.enableShadowing
+			
         RMaResultsLSP(Xpos,Ypos) = resultsRMa{Xpos,Ypos}.LSP;
-        RMaResultsLOSprop(Xpos,Ypos) = resultsRMa{Xpos,Ypos}.LOSprop;
+			UMaResultsLSP(Xpos,Ypos) = resultsUMa{Xpos,Ypos}.LSP;
+		end
         
     end
 end
@@ -125,6 +146,22 @@ end
 %% Plotting
 
 close all
+
+figure
+contourf(lengthXY(1,:), lengthXY(2,:), UMaResultsRxPw, 10)
+%caxis([70 150])
+c = colorbar;
+c.Label.String = 'Receiver Power [dBm]';
+c.Label.FontSize = 12;
+colormap(hot)
+title('UMa \mu received power, 1.84 GHz')
+xlabel('X [m]')
+ylabel('Y [m]')
+
+figure
+heatmap(UMaResultsRxPw)
+set(gca,'YDir','reverse')
+colormap hot
 
 figure
 contourf(lengthXY(1,:), lengthXY(2,:), UMaResultsPL)
@@ -162,10 +199,43 @@ contourf(lengthXY(1,:), lengthXY(2,:), RMaResultsLOS,1)
 title('LOS state for RMa')
 colormap summer
 
+if Param.channel.enableShadowing
+	
+	
 figure
 contourf(lengthXY(1,:), lengthXY(2,:), UMaResultsLSP)
 colorbar
 colormap jet
+end
+
+figure
+contourf(lengthXY(1,:), lengthXY(2,:), UMaResultsLOSprop)
+colorbar
+colormap jet
+title('RMa \mu pathloss, 1.84 GHz')
+xlabel('X [m]')
+ylabel('Y [m]')
+
+
+
+
+figure
+contourf(lengthXY(1,:), lengthXY(2,:), UMaResultsLOS,1)
+title('LOS state for UMa')
+
+figure
+contourf(lengthXY(1,:), lengthXY(2,:), RMaResultsLOS,1)
+title('LOS state for RMa')
+colormap summer
+
+if Param.channel.enableShadowing
+	
+	
+	figure
+	contourf(lengthXY(1,:), lengthXY(2,:), UMaResultsLSP)
+	colorbar
+	colormap jet
+end
 
 figure
 contourf(lengthXY(1,:), lengthXY(2,:), UMaResultsLOSprop)
