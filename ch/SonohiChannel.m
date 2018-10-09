@@ -594,7 +594,7 @@ classdef SonohiChannel < handle
 		end
 		
 		function seed = getLinkSeed(obj, rxObj)
-			seed = obj.Seed+10*obj.iRound^2+5*rxObj.NCellID^2;
+			seed = obj.Seed+10*obj.iRound^2+5*rxObj.Seed^2;
 		end
 		
 		function simTime = getSimTime(obj)

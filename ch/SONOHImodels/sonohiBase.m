@@ -110,6 +110,7 @@ classdef sonohiBase < handle
 			
 			rxPwdBm = EIRPdBm-lossdB+RxNode.Rx.NoiseFigure-AntennaGains{1}; %dBm
 			RxNode.Rx.RxPwdBm = rxPwdBm;
+			RxNode.Rx.AzimuthAngle =  TxNode.Tx.AntennaArray.getAzimuthAngle(TxNode.Position, RxNode.Position);
 			
 		end
 		

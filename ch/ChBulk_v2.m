@@ -96,6 +96,48 @@ classdef ChBulk_v2 < SonohiChannel
 			obj.UplinkModel.CompoundWaveform = compoundWaveform;
 		end
 		
+		function plotHeatmap(obj, Stations, User)
+			
+			% For each station do
+			% For each position in a grid x by x do
+			% compute received power
+
+
+			% Compute channel conditions (LSP) for each position in a grid x by x
+			res = 170;
+			lengthXY = [-3000:res:3000; -3000:res:3000];
+			N = length(lengthXY(1,:));
+			numStations = length(Stations);
+			RxPw = nan(N,N,numStations);
+			for iStation = 1:numStations
+			for Xpos = 1:length(lengthXY(1,:))
+				for Ypos = 1:length(lengthXY(2,:))
+					ue = User;
+					ue.Position = [lengthXY(1,Xpos), lengthXY(2,Ypos), 1.5];
+					ueRx = obj.DownlinkModel.computeLinkBudget(Stations(iStation), ue);
+					RxPw(Xpos,Ypos, iStation) = ueRx.Rx.RxPwdBm;
+				end
+			end
+			end
+% 			element = Station.Tx.AntennaArray.Panels{1}
+% 			element{1}.plotPattern()
+% 			
+			figure
+			contourf(lengthXY(1,:), lengthXY(2,:), max(RxPw(:,:,:),[],3), 10)
+			hold on
+			for iStation = 1:numStations
+				plot(Stations(iStation).Position(1),Stations(iStation).Position(2),'o')
+			end
+			%caxis([70 150])
+			c = colorbar;
+			c.Label.String = 'Receiver Power [dBm]';
+			c.Label.FontSize = 12;
+			colormap(hot)
+			title('UMa \mu received power.')
+			xlabel('X [m]')
+			ylabel('Y [m]')
+
+		end
 		
 		
 		

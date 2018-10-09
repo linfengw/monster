@@ -42,33 +42,39 @@ classdef AntennaArray
             end
 				end
 				
+				function AzimuthAngle = getAzimuthAngle(obj, TxPosition, RxPosition)
+					
+					deltaX = TxPosition(1)- RxPosition(1);
+					deltaY = TxPosition(2)- RxPosition(2);
+					RxBearing = rad2deg(atan2(deltaY,deltaX));
+					AzimuthAngle = obj.Bearing + RxBearing;
+					
+					% If Azimuth is below -180 or above 180 degrees, the angle at
+					% which the radiation pattern is compute is opposite. E.g. 183
+					% degrees is beyond the radiation pattern limit of -pi to pi, so
+					% -177 is the correct conversion.
+					if AzimuthAngle < -180
+						AzimuthAngle = AzimuthAngle+360;
+					end
+					
+					if AzimuthAngle > 180
+						AzimuthAngle = AzimuthAngle-360;
+					end
+					
+				end
+				
 				function antennaGains = getAntennaGains(obj, TxPosition, RxPosition)
 					% compute antenna gains for all elements given position of array
 					% and position of receiver
 					
-					deltaX = RxPosition(1)-TxPosition(1);
-					deltaY = RxPosition(2)-TxPosition(2);
-
-% 					
-% 					figure
-% 					plot(RxPosition(1), RxPosition(2),'o')
-% 					hold on
-% 					plot(TxPosition(1), TxPosition(2),'x')
-% 					xlim([0 500])
-% 					ylim([0 500])
-					% Compute bearing of Rx to Tx counterclockwise. North is 0 degrees
-					RxBearing = -1*rad2deg(atan2(deltaX,deltaY));
-					
-					% Azimuth angle is then the bearing of the array - the bearing of
-					% the rx to the antennarray.
-					AzimuthAngle = obj.Bearing -  RxBearing;
+					% Get azimuth angle using atan2
+					AzimuthAngle = obj.getAzimuthAngle(TxPosition, RxPosition);
 					
 					% Elevation is given by tan(theta) = deltaH/dist2d
 					% Horizontal is 90 degrees, zenith is 0
 					deltaH = TxPosition(3)-RxPosition(3);
 					dist2d = norm(RxPosition(1:2)-TxPosition(1:2));
 					ElevationAngle = rad2deg(atan(deltaH/dist2d))+90;
-					
 					antennaGains = cell([length(obj.Panels),obj.ElementsPerPanel]);
 					% Loop all panels, and elements and get the gain of each 
 					for iPanel = 1:length(obj.Panels)

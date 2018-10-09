@@ -29,7 +29,7 @@ classdef enbTransmitterModule
 			obj = setBCH(obj, enb);
 			obj = resetResourceGrid(obj, enb);
 			obj = initPDSCH(obj, enb.NDLRB);
-			obj.AntennaArray = AntennaArray([1, 1, 1, 1, 1], 30, 120);
+			obj.AntennaArray = AntennaArray([1, 1, 1, 1, 1], 30, 102);
 			[obj.Frame, obj.FrameInfo, obj.FrameGrid] = generateDummyFrame(enb);
     end
     

@@ -31,6 +31,7 @@ classdef ueReceiverModule
 		PropDelay;
 		HistoryStats;
         ChannelConditions = struct(); % Storage of channel conditions
+				AzimuthAngle;
 	end
 	
 	methods

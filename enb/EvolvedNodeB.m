@@ -339,6 +339,12 @@ classdef EvolvedNodeB
 			
 		end
 		
+		function obj = scheduleSingleUserDownlink(obj, user)
+			obj.resetScheduleDL()
+			obj.Users = struct('UeId', user.NCellID, 'CQI', -1, 'RSSI', -1);
+			obj.ScheduleDL(1,1).UeId = user.NCellID;
+		end
+		
 	end
 	
 end
