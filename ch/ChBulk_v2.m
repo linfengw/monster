@@ -97,12 +97,6 @@ classdef ChBulk_v2 < SonohiChannel
 		end
 		
 		function plotHeatmap(obj, Stations, User)
-			
-			% For each station do
-			% For each position in a grid x by x do
-			% compute received power
-
-
 			% Compute channel conditions (LSP) for each position in a grid x by x
 			res = 170;
 			lengthXY = [-3000:res:3000; -3000:res:3000];
@@ -119,23 +113,58 @@ classdef ChBulk_v2 < SonohiChannel
 				end
 			end
 			end
-% 			element = Station.Tx.AntennaArray.Panels{1}
-% 			element{1}.plotPattern()
-% 			
+			
+			%% Plot antenna pattern
+ 			element = Stations(1).Tx.AntennaArray.Panels{1};
+ 			element{1}.plotPattern()
+			
+			
+			
+			%% Plot of maximum received power at given coordinates. 
+			colors = {'r','b','g','y','c','k'};
+			
+			h = cell(numStations,1);
 			figure
 			contourf(lengthXY(1,:), lengthXY(2,:), max(RxPw(:,:,:),[],3), 10)
 			hold on
 			for iStation = 1:numStations
-				plot(Stations(iStation).Position(1),Stations(iStation).Position(2),'o')
+				legends{iStation} = sprintf('Station %i', iStation);
+				Stations(iStation).Tx.AntennaArray.plotBearing(Stations(iStation).Position, colors{iStation})
+				h{iStation} = plot(Stations(iStation).Position(1),Stations(iStation).Position(2),'o', 'MarkerFaceColor',colors{iStation});
 			end
 			%caxis([70 150])
 			c = colorbar;
 			c.Label.String = 'Receiver Power [dBm]';
 			c.Label.FontSize = 12;
 			colormap(hot)
-			title('UMa \mu received power.')
+			legend([h{:}],legends{:})
+			title('Max received power.')
 			xlabel('X [m]')
 			ylabel('Y [m]')
+			
+			%% Plot of coverage for different stations.
+			RxPwThreshold = -85;
+			stationcoverage = zeros(length(lengthXY),length(lengthXY),numStations);
+			for iStation = 1:numStations
+				stationcoverage(:,:,iStation) = RxPw(:,:,iStation) > RxPwThreshold;
+			end
+			
+			stationcoverage = double(stationcoverage);
+			stationcoverage(stationcoverage == 0) = NaN;
+
+			
+			legends = cell(numStations,1);
+			figure
+			hold on
+			for iStation = 1:numStations
+				legends{iStation} = sprintf('Station %i', iStation);
+				surf(lengthXY(1,:),lengthXY(2,:),stationcoverage(:,:,iStation),'FaceColor',colors{iStation},'FaceAlpha',0.5,'EdgeColor','none')
+			end
+			title(sprintf('Received power > %i dBm for all stations',RxPwThreshold))
+			legend(legends{:})
+			grid on
+			view(2)
+			
 
 		end
 		

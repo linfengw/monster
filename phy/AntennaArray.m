@@ -30,8 +30,18 @@ classdef AntennaArray
                 obj.Panels{iPanel} = obj.constructAntennaElements();
             end
 
-        end
+				end
         
+				function plotBearing(obj, Position, Color)
+					alpha = deg2rad(obj.Bearing+90);
+					L = 500;
+					x = Position(1);
+					y = Position(2);
+					x2=x+(L*cos(alpha));
+					y2=y+(L*sin(alpha));
+					arrow([x y],[x2 y2], 'EdgeColor',Color, 'FaceColor',Color)
+				end
+				
         function antennaElements = constructAntennaElements(obj)
             % Generate elements in rectangular grid
             antennaElements = cell(obj.ElementsPerPanel);
