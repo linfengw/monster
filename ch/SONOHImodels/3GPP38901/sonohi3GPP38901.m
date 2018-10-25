@@ -102,7 +102,7 @@ classdef sonohi3GPP38901 < sonohiBase
 			end
 			
 			obj.checkInterpolationRange(axisXY, userPosition);
-			XCorr = interp2(axisXY(1,:), axisXY(2,:), map, userPosition(1), userPosition(2), 'spline');
+			XCorr = interp2(axisXY(1,:), axisXY(2,:), map, userPosition(1), userPosition(2), 'linear');
 			
 		end
 		

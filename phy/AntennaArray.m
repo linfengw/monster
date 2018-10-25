@@ -6,7 +6,8 @@ classdef AntennaArray
         ElementsPerPanel
         Polarizations;
         Bearing;
-        Tilt; 
+        Tilt;
+				Type; % 3GPP38901, Omni
     end
     
     properties (Access = private)
@@ -15,21 +16,48 @@ classdef AntennaArray
     end
     
     methods
-        function obj = AntennaArray(arrayTuple, bearing, tilt)
-            % arrayTuple defines structure of array in accordance with 3GPP
-            % 38.901. (Mg, Ng, M, N, P). Where
-            % Mg x Ng = Number of panels in rectangular grid
-            % M x N = Number of elements per panel in rectangular grid
-            % P = Number of polarizations per element.
-            obj.Panels = cell((arrayTuple(1)*arrayTuple(2)),1);
-            obj.ElementsPerPanel = arrayTuple(3:4);
-            obj.Polarizations = arrayTuple(5);
-            obj.Bearing = bearing;
-            obj.Tilt = tilt;
-            for iPanel = 1:length(obj.Panels)
-                obj.Panels{iPanel} = obj.constructAntennaElements();
-            end
+        function obj = AntennaArray(type)
 
+						obj.Type = type;
+						switch type
+							case '3GPP38901'
+								obj.config3gpp38901()
+							case 'Omni'
+								obj.configOmniDirectional()
+						end
+						
+
+
+				end
+				
+				function configOmniDirectional(obj)
+					% Omni directional antenna
+					% arrayTuple defines structure of array in accordance with 3GPP
+					% 38.901. (Mg, Ng, M, N, P). Where
+					% Mg x Ng = Number of panels in rectangular grid
+					% M x N = Number of elements per panel in rectangular grid
+					% P = Number of polarizations per element. 
+					arrayTuple = [1, 1, 1, 1, 1];
+					obj.Panels = cell((arrayTuple(1)*arrayTuple(2)),1);
+				end
+
+				function config3gpp38901(obj)
+					% arrayTuple defines structure of array in accordance with 3GPP
+					% 38.901. (Mg, Ng, M, N, P). Where
+					% Mg x Ng = Number of panels in rectangular grid
+					% M x N = Number of elements per panel in rectangular grid
+					% P = Number of polarizations per element.
+					arrayTuple = [1, 1, 1, 1, 1];
+					bearing = 30;
+					tilt = 102;
+					obj.Panels = cell((arrayTuple(1)*arrayTuple(2)),1);
+					obj.ElementsPerPanel = arrayTuple(3:4);
+					obj.Polarizations = arrayTuple(5);
+					obj.Bearing = bearing;
+					obj.Tilt = tilt;
+					for iPanel = 1:length(obj.Panels)
+						obj.Panels{iPanel} = obj.constructAntennaElements('3GPP');
+					end
 				end
         
 				function plotBearing(obj, Position, Color)
@@ -73,7 +101,7 @@ classdef AntennaArray
 					
 				end
 				
-				function antennaGains = getAntennaGains(obj, TxPosition, RxPosition)
+				function antennaGains = compute3GPPAntennaGains(obj, TxPosition, RxPosition)
 					% compute antenna gains for all elements given position of array
 					% and position of receiver
 					
@@ -96,6 +124,19 @@ classdef AntennaArray
 						end
 					end
 			
+					
+				end
+				
+				function antennaGains = getAntennaGains(obj, TxPosition, RxPosition)
+					switch obj.Type
+						case '3GPP38901'
+							antennaGains = obj.compute3GPPAntennaGains(TxPosition, RxPosition);
+						case 'Omni'
+							antennaGains = {0}; %Ideal antenna pattern in all directions
+						otherwise
+							sonohilog(sprintf('Antenna Type %s not known', obj.Type),'ERR')
+					end
+					
 				end
 
         function numPanels = NumberOfPanels(obj)

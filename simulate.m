@@ -31,7 +31,8 @@ if Param.generateHeatMap
 		case 'perClass'
 			HeatMap = generateHeatMapClass(Stations, Channel, Param);
 		case 'perStation'
-			HeatMap = generateHeatmap(Stations, Channel, Param);
+			ue = UserEquipment(Param, 99);
+			Channel.plotHeatmap(Stations,ue);
 		otherwise
 			sonohilog('Unknown heatMapType selected in simulation parameters', 'ERR')
 	end

@@ -22,6 +22,6 @@ microPos = networkLayout.Cells{1}.MicroPos;
 picoPos = networkLayout.Cells{1}.PicoPos;
 
 %Draw the base stations
-networkLayout.draweNBs(Param);	
+%networkLayout.draweNBs(Param);	
 	
 end

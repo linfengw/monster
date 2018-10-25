@@ -105,11 +105,11 @@ classdef sonohiBase < handle
 			% This requires a :meth:`computePathLoss` method, which is supplied by child classes.
 			% returns updated RxPwdBm of RxNode.Rx
 			[lossdB, RxNode] = obj.computePathLoss(TxNode, RxNode);
-			EIRPdBm = TxNode.Tx.getEIRPdBm;
-			AntennaGains = TxNode.Tx.AntennaArray.getAntennaGains(TxNode.Position, RxNode.Position);
+			EIRPdBm = TxNode.Tx.getEIRPdBm(TxNode.Position, RxNode.Position);
 			
-			rxPwdBm = EIRPdBm-lossdB+RxNode.Rx.NoiseFigure-AntennaGains{1}; %dBm
+			rxPwdBm = EIRPdBm-lossdB+RxNode.Rx.NoiseFigure; %dBm
 			RxNode.Rx.RxPwdBm = rxPwdBm;
+			% For debugging purposes
 			RxNode.Rx.AzimuthAngle =  TxNode.Tx.AntennaArray.getAzimuthAngle(TxNode.Position, RxNode.Position);
 			
 		end
