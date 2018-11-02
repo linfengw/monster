@@ -25,8 +25,7 @@
 
   
 
-  
-    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="#" />
     <link rel="search" title="Search" href="search.html" /> 
@@ -86,6 +85,7 @@
 <li class="toctree-l1"><a class="reference internal" href="enb.html">EvolvedNodeB</a></li>
 <li class="toctree-l1"><a class="reference internal" href="ue.html">UserEquipment</a></li>
 <li class="toctree-l1"><a class="reference internal" href="ch.html">Channel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="mobility.html">Mobility</a></li>
 <li class="toctree-l1"><a class="reference internal" href="traffic.html">Traffic</a></li>
 </ul>
 
@@ -160,6 +160,8 @@
  | <a href="#G"><strong>G</strong></a>
  | <a href="#H"><strong>H</strong></a>
  | <a href="#I"><strong>I</strong></a>
+ | <a href="#L"><strong>L</strong></a>
+ | <a href="#M"><strong>M</strong></a>
  | <a href="#N"><strong>N</strong></a>
  | <a href="#R"><strong>R</strong></a>
  | <a href="#S"><strong>S</strong></a>
@@ -173,7 +175,7 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="chmodels.html#ch.SONOHImodels.WINNER.sonohiWINNERv2.AA">AA (ch.SONOHImodels.WINNER.sonohiWINNERv2 attribute)</a>
 </li>
-      <li><a href="chmodels.html#ch.SONOHImodels.WINNER.sonohiWINNERv2.addAssociated">addAssociated() (ch.SONOHImodels.WINNER.sonohiWINNERv2 method)</a>
+      <li><a href="chmodels.html#ch.SONOHImodels.WINNER.sonohiWINNERv2.addAssociated">addAssociated() (ch.SONOHImodels.WINNER.sonohiWINNERv2 static method)</a>
 </li>
       <li><a href="chmodels.html#ch.SONOHImodels.sonohiBase.addAWGN">addAWGN() (ch.SONOHImodels.sonohiBase method)</a>
 </li>
@@ -201,6 +203,8 @@
 </li>
       <li><a href="chmodels.html#module-ch.SONOHImodels">ch.SONOHImodels (module)</a>
 </li>
+      <li><a href="chmodels.html#module-ch.SONOHImodels.3GPP38901">ch.SONOHImodels.3GPP38901 (module)</a>
+</li>
       <li><a href="chmodels.html#module-ch.SONOHImodels.eHATA">ch.SONOHImodels.eHATA (module)</a>
 </li>
       <li><a href="chmodels.html#module-ch.SONOHImodels.ITUR1546">ch.SONOHImodels.ITUR1546 (module)</a>
@@ -209,25 +213,31 @@
 </li>
       <li><a href="chmodels.html#ch.SONOHImodels.sonohiBase.Channel">Channel (ch.SONOHImodels.sonohiBase attribute)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="ch.html#ch.ChBulk_v2">ChBulk_v2 (class in ch)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="ch.html#ch.ChBulk_v2.ChBulk_v2">ChBulk_v2() (ch.ChBulk_v2 method)</a>
+</li>
+      <li><a href="chmodels.html#ch.SONOHImodels.3GPP38901.sonohi3GPP38901.checkInterpolationRange">checkInterpolationRange() (ch.SONOHImodels.3GPP38901.sonohi3GPP38901 static method)</a>
 </li>
       <li><a href="chmodels.html#ch.SONOHImodels.sonohiBase.Chtype">Chtype (ch.SONOHImodels.sonohiBase attribute)</a>
 </li>
       <li><a href="chmodels.html#ch.SONOHImodels.sonohiBase.computeLinkBudget">computeLinkBudget() (ch.SONOHImodels.sonohiBase method)</a>
 </li>
-      <li><a href="chmodels.html#ch.SONOHImodels.eHATA.sonohieHATA.computePathLoss">computePathLoss() (ch.SONOHImodels.eHATA.sonohieHATA method)</a>
+      <li><a href="chmodels.html#ch.SONOHImodels.3GPP38901.sonohi3GPP38901.computePathLoss">computePathLoss() (ch.SONOHImodels.3GPP38901.sonohi3GPP38901 method)</a>
 
       <ul>
         <li><a href="chmodels.html#ch.SONOHImodels.ITUR1546.sonohiITU.computePathLoss">(ch.SONOHImodels.ITUR1546.sonohiITU method)</a>
 </li>
-      </ul></li>
-      <li><a href="chmodels.html#ch.SONOHImodels.WINNER.sonohiWINNERv2.configureAA">configureAA() (ch.SONOHImodels.WINNER.sonohiWINNERv2 method)</a>
+        <li><a href="chmodels.html#ch.SONOHImodels.eHATA.sonohieHATA.computePathLoss">(ch.SONOHImodels.eHATA.sonohieHATA method)</a>
 </li>
-      <li><a href="chmodels.html#ch.SONOHImodels.WINNER.sonohiWINNERv2.configureModel">configureModel() (ch.SONOHImodels.WINNER.sonohiWINNERv2 method)</a>
+      </ul></li>
+      <li><a href="chmodels.html#ch.SONOHImodels.3GPP38901.sonohi3GPP38901.computeShadowingLoss">computeShadowingLoss() (ch.SONOHImodels.3GPP38901.sonohi3GPP38901 method)</a>
+</li>
+      <li><a href="chmodels.html#ch.SONOHImodels.WINNER.sonohiWINNERv2.configureAA">configureAA() (ch.SONOHImodels.WINNER.sonohiWINNERv2 static method)</a>
+</li>
+      <li><a href="chmodels.html#ch.SONOHImodels.WINNER.sonohiWINNERv2.configureModel">configureModel() (ch.SONOHImodels.WINNER.sonohiWINNERv2 static method)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -279,11 +289,31 @@
 <h2 id="I">I</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="chmodels.html#ch.SONOHImodels.WINNER.sonohiWINNERv2.initializeLayout">initializeLayout() (ch.SONOHImodels.WINNER.sonohiWINNERv2 method)</a>
+      <li><a href="chmodels.html#ch.SONOHImodels.WINNER.sonohiWINNERv2.initializeLayout">initializeLayout() (ch.SONOHImodels.WINNER.sonohiWINNERv2 static method)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="ch.html#ch.SonohiChannel.isLinkLOS">isLinkLOS() (ch.SonohiChannel method)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="L">L</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="chmodels.html#ch.SONOHImodels.3GPP38901.sonohi3GPP38901.LOSprobability">LOSprobability() (ch.SONOHImodels.3GPP38901.sonohi3GPP38901 static method)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="chmodels.html#ch.SONOHImodels.3GPP38901.sonohi3GPP38901.LOSpropMap">LOSpropMap() (ch.SONOHImodels.3GPP38901.sonohi3GPP38901 static method)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="M">M</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="mobility.html#mobility.MMobility">MMobility (class in mobility)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -299,7 +329,7 @@
 <h2 id="R">R</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="ch.html#ch.ChBulk_v2.resetChannelModels">resetChannelModels() (ch.ChBulk_v2 method)</a>
+      <li><a href="mobility.html#mobility.MMobility.randomWalkPedestrian">randomWalkPedestrian() (mobility.MMobility method)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
@@ -311,22 +341,32 @@
 <h2 id="S">S</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="chmodels.html#ch.SONOHImodels.WINNER.sonohiWINNERv2.setPositions">setPositions() (ch.SONOHImodels.WINNER.sonohiWINNERv2 method)</a>
+      <li><a href="mobility.html#mobility.MMobility.setParameters">setParameters() (mobility.MMobility method)</a>
 </li>
-      <li><a href="chmodels.html#ch.SONOHImodels.WINNER.sonohiWINNERv2.setPropagationScenario">setPropagationScenario() (ch.SONOHImodels.WINNER.sonohiWINNERv2 method)</a>
+      <li><a href="chmodels.html#ch.SONOHImodels.WINNER.sonohiWINNERv2.setPositions">setPositions() (ch.SONOHImodels.WINNER.sonohiWINNERv2 static method)</a>
 </li>
-      <li><a href="chmodels.html#ch.SONOHImodels.WINNER.sonohiWINNERv2.setup">setup() (ch.SONOHImodels.WINNER.sonohiWINNERv2 method)</a>
+      <li><a href="chmodels.html#ch.SONOHImodels.WINNER.sonohiWINNERv2.setPropagationScenario">setPropagationScenario() (ch.SONOHImodels.WINNER.sonohiWINNERv2 static method)</a>
 </li>
-      <li><a href="ch.html#ch.ChBulk_v2.setupChannelDL">setupChannelDL() (ch.ChBulk_v2 method)</a>
+      <li><a href="chmodels.html#ch.SONOHImodels.sonohiBase.setup">setup() (ch.SONOHImodels.sonohiBase method)</a>
 </li>
       <li><a href="ch.html#ch.ChBulk_v2.setupChannelUL">setupChannelUL() (ch.ChBulk_v2 method)</a>
 </li>
-      <li><a href="chmodels.html#ch.SONOHImodels.sonohiBase.setWaveform">setWaveform() (ch.SONOHImodels.sonohiBase method)</a>
+      <li><a href="chmodels.html#ch.SONOHImodels.3GPP38901.sonohi3GPP38901.setupShadowing">setupShadowing() (ch.SONOHImodels.3GPP38901.sonohi3GPP38901 method)</a>
+
+      <ul>
+        <li><a href="chmodels.html#ch.SONOHImodels.sonohiBase.setupShadowing">(ch.SONOHImodels.sonohiBase method)</a>
 </li>
-      <li><a href="chmodels.html#ch.SONOHImodels.sonohiBase">sonohiBase (class in ch.SONOHImodels)</a>
+      </ul></li>
+      <li><a href="chmodels.html#ch.SONOHImodels.sonohiBase.setWaveform">setWaveform() (ch.SONOHImodels.sonohiBase static method)</a>
+</li>
+      <li><a href="chmodels.html#ch.SONOHImodels.3GPP38901.sonohi3GPP38901">sonohi3GPP38901 (class in ch.SONOHImodels.3GPP38901)</a>
+</li>
+      <li><a href="chmodels.html#ch.SONOHImodels.3GPP38901.sonohi3GPP38901.sonohi3GPP38901">sonohi3GPP38901() (ch.SONOHImodels.3GPP38901.sonohi3GPP38901 method)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="chmodels.html#ch.SONOHImodels.sonohiBase">sonohiBase (class in ch.SONOHImodels)</a>
+</li>
       <li><a href="ch.html#ch.SonohiChannel">SonohiChannel (class in ch)</a>
 </li>
       <li><a href="chmodels.html#ch.SONOHImodels.eHATA.sonohieHATA">sonohieHATA (class in ch.SONOHImodels.eHATA)</a>
@@ -340,6 +380,12 @@
       <li><a href="chmodels.html#ch.SONOHImodels.WINNER.sonohiWINNERv2">sonohiWINNERv2 (class in ch.SONOHImodels.WINNER)</a>
 </li>
       <li><a href="chmodels.html#ch.SONOHImodels.WINNER.sonohiWINNERv2.sonohiWINNERv2">sonohiWINNERv2() (ch.SONOHImodels.WINNER.sonohiWINNERv2 method)</a>
+</li>
+      <li><a href="chmodels.html#ch.SONOHImodels.3GPP38901.sonohi3GPP38901.spatialCorrMap">spatialCorrMap() (ch.SONOHImodels.3GPP38901.sonohi3GPP38901 static method)</a>
+</li>
+      <li><a href="chmodels.html#ch.SONOHImodels.3GPP38901.sonohi3GPP38901.spatialLOSstate">spatialLOSstate() (ch.SONOHImodels.3GPP38901.sonohi3GPP38901 method)</a>
+</li>
+      <li><a href="chmodels.html#ch.SONOHImodels.3GPP38901.sonohi3GPP38901.SpatialMaps">SpatialMaps (ch.SONOHImodels.3GPP38901.sonohi3GPP38901 attribute)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -373,7 +419,7 @@
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="chmodels.html#ch.SONOHImodels.WINNER.sonohiWINNERv2.updateIndexing">updateIndexing() (ch.SONOHImodels.WINNER.sonohiWINNERv2 method)</a>
+      <li><a href="chmodels.html#ch.SONOHImodels.WINNER.sonohiWINNERv2.updateIndexing">updateIndexing() (ch.SONOHImodels.WINNER.sonohiWINNERv2 static method)</a>
 </li>
       <li><a href="traffic.html#traffic.TrafficGenerator.updateTransmissionQueue">updateTransmissionQueue() (traffic.TrafficGenerator method)</a>
 </li>
@@ -442,16 +488,11 @@
 
   
 
-  
-  
-    <script type="text/javascript" src="_static/js/theme.js"></script>
-  
+  <script type="text/javascript" src="_static/js/theme.js"></script>
 
   <script type="text/javascript">
       jQuery(function () {
-          
-          SphinxRtdTheme.Navigation.enableSticky();
-          
+          SphinxRtdTheme.Navigation.enable(true);
       });
   </script> 
 

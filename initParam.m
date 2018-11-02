@@ -20,18 +20,24 @@ Param.saveFrame = 1;
 %% Draw functions
 Param.generateHeatMap = 0;% Boolean to control the generation of a heatmap of the pathloos in the scenario
 Param.heatMapType = 'perStation';% String to control the type of heatmap
-Param.heatMapRes = 10;% Heatmap resoultion in metresse
+Param.heatMapRes = 10;% Heatmap resoultion in metres
 
 %% Network
 Param.numSubFramesMacro = 50;% Integer used to set the number of RBs for a macro eNodeB
 Param.numSubFramesMicro = 25;% Integer used to set the number of RBs for a micro eNodeB
+Param.numSubFramesPico = 6;% Integer used to set the number of RBs for a pico eNodeB
 Param.numSubFramesUE = 25;% Integer used to set the number of RBs for the uplink
 Param.numMacro = 1;% Integer used to specify the number of macro eNodeBs in the scenario (currently only 1)
-Param.numMicro =  2;% Integer used to specify the number of micro eNodeBs in the scenario
-Param.microPos = 'uniform'; % Array of char to deicde the positioning of the micro BS (uniform, random, clusterized)
-Param.microUniformRadius = 100;% Double radius of distance from centre for microBS in metres
 Param.macroHeight = 35;% Double used to specify the height in metres of the macro eNodeBs
+Param.numMicro = 2;% Integer used to specify the number of micro eNodeBs in the scenario
+Param.microPos = 'uniform'; % Array of char to decide the positioning of the micro BS (uniform, random, clusterized)
+Param.microUniformRadius = 400;% Double radius of distance from centre for microBS in metres
 Param.microHeight = 25;% Double used to specify the height in metres of the micro eNodeBs
+Param.numPico = 3;% Integer used to specify the number of pico eNodeBs in the scenario
+Param.picoPos = 'uniform'; % Array of char to decide the positioning of the micro BS (uniform, random)
+Param.picoUniformRadius = 400;% Double radius of distance from centre for picoBS in metres
+Param.picoHeight = 5;% Double used to specify the height in metres of the pico eNodeBs
+Param.numEnodeBs = Param.numMacro + Param.numMicro + Param.numPico;
 Param.ueHeight = 1.5;% Double used to specify the height in metres of the UEs
 Param.numUsers = 15;% Integer used for the number of UEs
 Param.mobilityScenario = 'pedestrian';% Integer to choose the mobility scenario (pedestrian, vehicular, static, superman, straight)
@@ -69,17 +75,25 @@ Param.eNBGain = 0; %Antenna gain of the eNB.
 Param.prbRe = 168;% Integer used for the number of RE in a RB
 Param.PRACHInterval = 10; %Given as the number of subframes between each PRACH.
 %% Channel configuration
-Param.channel.modeDL = 'ITU1546';% String to control the channel mode in DL ['winner', 'eHATA', 'ITU1546']
+Param.channel.modeDL = 'Quadriga';% String to control the channel mode in DL ['winner', 'eHATA', 'ITU1546', '3GPP38901']
 Param.channel.modeUL = 'B2B';% String to control the channel mode in UL
 Param.channel.region = 'Urban';% String to control the channel region
 Param.channel.enableFading = true;
 Param.channel.enableInterference = true;
+Param.channel.enableShadowing = true; % Only capable for 3GPP38901
 Param.channel.computeCoverage = false; %Only a visualization feature. Force the recomputation of the coverage, otherwise loaded from file if stored.
+Param.channel.LOSMethod = '3GPP38901-probability'; % ['fresnel', '3GPP38901-probability']
 % WINNER CONFIGURATION, only if 'winner is used'. See docs for the different varieties.
 if strcmp(Param.channel.modeDL,'winner')
   Param.channel.region = struct();
 	Param.channel.region.macroScenario = '11';
 	Param.channel.region.microScenario = '3';
+	Param.channel.region.picoScenario = '3';
+elseif strcmp(Param.channel.modeDL, '3GPP38901')
+	Param.channel.region = struct();
+	Param.channel.region.macroScenario = 'UMa';
+	Param.channel.region.microScenario = 'UMi';
+	Param.channel.region.picoScenario = 'UMi';
 end
 %% SON parameters
 Param.nboRadius = 100;% Double to set the maximum radius within which eNodeBs are considered as neighbours in metres

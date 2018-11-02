@@ -11,7 +11,7 @@ classdef ueReceiverModule
 		SNR;
 		SNRdB;
 		Waveform;
-    WaveformInfo;
+        WaveformInfo;
 		RxPwdBm; % Wideband
 		IntSigLoss;
 		Subframe;
@@ -30,6 +30,7 @@ classdef ueReceiverModule
 		PDSCH;
 		PropDelay;
 		HistoryStats;
+        ChannelConditions = struct(); % Storage of channel conditions
 	end
 	
 	methods
@@ -40,27 +41,25 @@ classdef ueReceiverModule
 			obj.CQI = 3;
 			obj.Blocks = struct('ok', 0, 'err', 0, 'tot', 0);
 			obj.Bits = struct('ok', 0, 'err', 0, 'tot', 0);
-			for iStation = 1:(Param.numMacro + Param.numMicro)
+			for iStation = 1:Param.numEnodeBs
 				cellstring = char(strcat("NCellID",int2str(iStation)));
 				obj.HistoryStats.(cellstring) = struct('SINRdB',[],'SNRdB',[],'RxPwdBm',[]);
 			end
 		end
 		
-		function old_values = getFromHistory(obj, field, stationID)
+		function oldValues = getFromHistory(obj, field, stationID)
 			stationfield = strcat('NCellID',int2str(stationID));
 			path = {'HistoryStats', stationfield, field};
-			old_values = getfield(obj, path{:});
+			oldValues = getfield(obj, path{:});
 		end
 		
 		function obj = addToHistory(obj, field, stationID)
-			
-			old_values = obj.getFromHistory(field, stationID);
+			oldValues = obj.getFromHistory(field, stationID);
 			stationfield = strcat('NCellID',int2str(stationID));
 			path = {'HistoryStats', stationfield, field};
-			new_value = getfield(obj, field);
-			new_array = [old_values, new_value];
-			obj = setfield(obj, path{:}, new_array);
-			
+			newValue = getfield(obj, field);
+			newArray = [oldValues, newValue];
+			obj = setfield(obj, path{:}, newArray);		
 		end
 		
 		function obj = set.Waveform(obj,Sig)
@@ -207,7 +206,17 @@ classdef ueReceiverModule
 		function obj = selectCqi(obj, enbObj)
 			enb = cast2Struct(enbObj);
 			[obj.CQI, ~] = lteCQISelect(enb, enb.Tx.PDSCH, obj.EstChannelGrid, obj.NoiseEst);
-		end
+    end
+    
+    function obj = computeOffset(obj, enbObj)
+      % Compute offset based on PSS and SSS. Done every 0 and 5th subframe.
+      if enbObj.NSubframe == 0 || enbObj.NSubframe == 5
+        pssCorr = finddelay(enbObj.Tx.PssRef,obj.Waveform);
+        sssCorr = finddelay(enbObj.Tx.SssRef,obj.Waveform);
+        offset_ = min(pssCorr,sssCorr);
+        obj.Offset = offset_;
+      end
+    end
 		
 		% reference measurements
 		function obj  = referenceMeasurements(obj,enbObj)
@@ -227,6 +236,10 @@ classdef ueReceiverModule
 			obj.RSRPdBm = meas.RSRPdBm;
 			obj.RSSIdBm = meas.RSSIdBm;
 			obj.RSRQdB = meas.RSRQdB;
+		end
+		
+		function obj = applyOffset(obj)
+			obj.Waveform = obj.Waveform(obj.Offset+1:end);
 		end
 		
 		% Block reception
@@ -301,7 +314,7 @@ classdef ueReceiverModule
 		% cast object to struct
 		function objstruct = cast2Struct(obj)
 			objstruct = struct(obj);
-		end
+    end
 		
 		% Reset receiver
 		function obj = reset(obj)
