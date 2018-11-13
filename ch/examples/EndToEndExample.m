@@ -51,3 +51,16 @@ User.Rx = User.Rx.estimateChannel(Station, ChannelEstimator.Downlink);
 User.Rx = User.Rx.equaliseSubframe();
 % Calculate the CQI to use
 User.Rx = User.Rx.selectCqi(Station);
+
+%% Create uplink
+
+User.Tx = User.Tx.mapGridAndModulate(User, Param);
+figure
+surf(abs(User.Tx.ReGrid))
+figure
+plot(10*log10(abs(fftshift(fft(User.Tx.Waveform)))))
+
+%% Traverse channel uplink
+[Station, ~] = Channel.traverse(Station,User,'uplink');
+
+%% Get uplink CSI

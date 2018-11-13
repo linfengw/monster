@@ -11,7 +11,7 @@ Param.draw = 1;
 Param.storeTxData = 0;
 
 % Integer used to control the number of scheduling rounds (subframes) to simulate
-Param.schRounds = 100000;
+Param.schRounds = 10;
 Param.seed = 42;% Integer used for the simulation seed
 Param.mobilitySeed = 19; % Integer for randomizing user positioning and trajectories
 % Boolean to save a whole LTE frame for the macro eNodeB for testing
@@ -29,11 +29,11 @@ Param.numSubFramesPico = 6;% Integer used to set the number of RBs for a pico eN
 Param.numSubFramesUE = 25;% Integer used to set the number of RBs for the uplink
 Param.numMacro = 1;% Integer used to specify the number of macro eNodeBs in the scenario (currently only 1)
 Param.macroHeight = 35;% Double used to specify the height in metres of the macro eNodeBs
-Param.numMicro = 9;% Integer used to specify the number of micro eNodeBs in the scenario (currently max 12 if hexagonal is chosen)
+Param.numMicro = 0;% Integer used to specify the number of micro eNodeBs in the scenario (currently max 12 if hexagonal is chosen)
 Param.microPos = 'hexagonal'; % Array of char to decide the positioning of the micro BS (uniform, random, clusterized, hexagonal)
 Param.microUniformRadius = 200;% Double radius of distance from centre for microBS in metres
 Param.microHeight = 25;% Double used to specify the height in metres of the micro eNodeBs
-Param.numPico = 6;% Integer used to specify the number of pico eNodeBs in the scenario
+Param.numPico = 0;% Integer used to specify the number of pico eNodeBs in the scenario
 Param.numPicoPerSector = 2; %for single cell test and debugging
 Param.picoPos = 'uniform'; % Array of char to decide the positioning of the micro BS (uniform, random)
 Param.picoUniformRadius = 200;% Double radius of distance from centre for picoBS in metres
@@ -42,7 +42,7 @@ Param.numEnodeBs = Param.numMacro + Param.numMicro + Param.numPico;
 Param.posScheme = 'Single Cell' % Array of char describing if a standard scheme/scenario should be used 
 				%['3GPP TR 38.901 UMa', '3GPP TR 38.901 RMa', 'ITU-R M.2412-0 5.B.C', 'ITU-R M2412-0 5.C.A', 'Single Cell'] leave empty for no scenario
 Param.ueHeight = 1.5;% Double used to specify the height in metres of the UEs
-Param.numUsers = 10;% Integer used for the number of UEs
+Param.numUsers = 1;% Integer used for the number of UEs
 Param.mobilityScenario = 'pedestrian';% Integer to choose the mobility scenario (pedestrian, pedestrian-indoor, vehicular, static, superman, straight)
 Param.buildings = 'mobility/buildings.txt';% Path for loading the file with the buildings
 Param.mobilityStep = 0.01;
@@ -51,7 +51,7 @@ Param.handoverTimer = 0.01;% X2 Handover timer in s (time needed from starting a
 
 %% Traffic
 Param.primaryTrafficModel = 'webBrowsing'; % Primary traffic model ['fullBuffer', 'videoStreaming', 'webBrowsing']
-Param.secondaryTrafficModel = 'videoStreaming'; % Secondary traffic model ['fullBuffer', 'videoStreaming', 'webBrowsing']
+Param.secondaryTrafficModel = 'fullBuffer'; % Secondary traffic model ['fullBuffer', 'videoStreaming', 'webBrowsing']
 Param.trafficMix = 0.5; % Mix in the UEs between primary and secondary traffic models in %
 Param.ueArrivalDistribution = 'Static'; % Arrival distribution for the UEs ['Poisson', 'Uniform', 'Static']
 Param.poissonLambda = 5; % Mean of the Poisson process in ms
@@ -82,7 +82,7 @@ Param.channel.modeDL = '3GPP38901';% String to control the channel mode in DL ['
 Param.channel.modeUL = 'B2B';% String to control the channel mode in UL
 Param.channel.region = 'Urban';% String to control the channel region
 Param.channel.enableFading = true;
-Param.channel.enableInterference = true;
+Param.channel.enableInterference = false;
 Param.channel.enableShadowing = true; % Only capable for 3GPP38901
 Param.channel.computeCoverage = false; %Only a visualization feature. Force the recomputation of the coverage, otherwise loaded from file if stored.
 Param.channel.LOSMethod = '3GPP38901-probability'; % ['fresnel', '3GPP38901-probability']

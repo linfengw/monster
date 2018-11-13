@@ -23,7 +23,9 @@ function [Stations, Param] = createBaseStations (Param)
 		Param = networkLayout.Param; %To update parameters to match a chosen scenario
 
 		%Draw the base stations
-		networkLayout.draweNBs(Param);	
+		if Param.draw
+			networkLayout.draweNBs(Param);
+		end
 		for iStation = 1:networkLayout.NumMacro
 			Stations(iStation) = EvolvedNodeB(Param, 'macro', networkLayout.MacroCells{iStation}.CellID);
 			Stations(iStation).Position = [networkLayout.MacroCoordinates(iStation, :), Param.macroHeight];

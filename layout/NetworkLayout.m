@@ -171,12 +171,12 @@ classdef NetworkLayout < handle
                     obj.PosScheme = 'Single Cell';
                     Param.macroRadius = 300;
                     Param.numMacro = 1;
-                    Param.numMicro = 9 * Param.numMacro;
-                    Param.numPico = Param.numPicoPerSector * 3 * Param.numMacro; 
+                    Param.numMicro = 0;
+                    Param.numPico = 0; 
                     Param.macroHeight = 35;
                     Param.microHeight = 10;
                     Param.picoHeight = 5;
-                    Param.numUsers = 15;
+                    Param.numUsers = 1;
                     Param.ueHeight = 1.5;
                     Param.primaryTrafficModelling = 'fullBuffer';
                     Param.trafficMix = 1;

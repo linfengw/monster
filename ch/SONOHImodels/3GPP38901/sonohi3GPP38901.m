@@ -45,6 +45,25 @@ classdef sonohi3GPP38901 < sonohiBase
 				
 			end
 		end
+		function RxNode = addFading(obj, TxNode, RxNode)
+			% TODO: Add MIMO to fading channel
+			v = RxNode.Mobility.Velocity * 3.6;                    % UT velocity in km/h
+			fc = TxNode.DlFreq*10e5;          % carrier frequency in Hz
+			c = physconst('lightspeed'); % speed of light in m/s
+			fd = (v*1000/3600)/c*fc;     % UT max Doppler frequency in Hz
+
+
+			tdl = nrTDLChannel;
+			tdl.DelayProfile = 'TDL-C';
+			tdl.DelaySpread = 300e-9;
+			tdl.MaximumDopplerShift = fd;
+			tdl.SampleRate = TxNode.Tx.WaveformInfo.SamplingRate;
+			%tdl.InitialTime = 
+			tdl.NumTransmitAntennas = 1;
+			tdl.NumReceiveAntennas = 1;
+			sig = [RxNode.Rx.Waveform;zeros(200,1)];
+			RxNode.Rx.Waveform = tdl(sig);
+		end
 		
 		function [mapLOS, mapNLOS, mapLOSprop, axisLOS, axisNLOS, axisLOSprop] = generateShadowMap(obj, station)
 			% .. todo:: check station.Seed is unique per station.

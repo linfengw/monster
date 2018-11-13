@@ -75,7 +75,7 @@ classdef sonohiBase < handle
 				
 				if strcmp(obj.Channel.fieldType,'full')
 					if obj.Channel.enableFading
-						user = obj.addFading(user);
+						user = obj.addFading(station, user);
 					end
 					user = obj.addAWGN(station, user);
 				else

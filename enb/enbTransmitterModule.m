@@ -1,4 +1,4 @@
-classdef enbTransmitterModule
+classdef enbTransmitterModule < handle
   properties
     Waveform;         %
     WaveformInfo;
@@ -13,12 +13,17 @@ classdef enbTransmitterModule
     NDLRB;
     Gain;
     PssRef;
-    SssRef;
+		SssRef;
+		Enb;
+		
+		% Reference subframes
+		Ref = struct('ReGrid',[], 'Waveform',[], 'WaveformInfo',[])
   end
   
   methods
     % Constructor
-    function obj = enbTransmitterModule(enb, Param)
+		function obj = enbTransmitterModule(enb, Param)
+			obj.Enb = enb;
       obj.TxPwdBm = 10*log10(enb.Pmax)+30;
       obj.Gain = Param.eNBGain;
       obj.NoiseFigure = Param.eNBNoiseFigure;
@@ -36,6 +41,26 @@ classdef enbTransmitterModule
       EIRPSubcarrier = obj.getEIRP()/size(obj.ReGrid,1);
 		end
 		
+		function obj = createReferenceSubframe(obj)
+			enb = struct(obj.Enb);
+			
+			% Reference
+			grid = lteResourceGrid(enb);
+			grid(lteCellRSIndices(enb)) = lteCellRS(enb);
+			
+			% Synchronization
+			grid(ltePSSIndices(enb)) = ltePSS(enb);
+			grid(lteSSSIndices(enb)) = lteSSS(enb);
+			
+			obj.Ref.ReGrid = grid;
+			[obj.Ref.Waveform, obj.Ref.WaveformInfo] = lteOFDMModulate(enb,grid);
+		end
+		
+		function obj = assignReferenceSubframe(obj)
+			obj.Waveform = obj.Ref.Waveform;
+			obj.ReGrid = obj.Ref.ReGrid;
+			obj.WaveformInfo = obj.Ref.WaveformInfo;
+		end
     
     function EIRP = getEIRP(obj)
       % Returns EIRP in Watts
@@ -91,6 +116,9 @@ classdef enbTransmitterModule
       enb = cast2Struct(enbObj);
       tx = cast2Struct(obj);
       % Create empty grid
+			% TODO: refactor with functions for creating reference signals and
+			% synchronization signals.
+			
       regrid = lteDLResourceGrid(enb);
       
       % Reference signals
