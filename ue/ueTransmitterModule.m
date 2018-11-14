@@ -91,6 +91,28 @@ classdef ueTransmitterModule
 			
 			reGrid = lteULResourceGrid(ueObj);
 			reGrid(obj.PUCCH.Indices) = obj.PUCCH.Symbols;
+
+			% PUSCH
+			obj.PUSCH.Modulation = 'QPSK';
+			obj.PUSCH.PRBSet = [0:ueObj.NULRB-1].';
+			obj.PUSCH.RV = 0;
+
+			% TODO replace this with actual data
+			frc = lteRMCUL('A1-1');
+			trBlk  = randi([0,1],frc.PUSCH.TrBlkSizes(1),1);
+			cw = lteULSCH(struct(ueObj), obj.PUSCH, trBlk );
+			puschsym = ltePUSCH(struct(ueObj),obj.PUSCH,cw);
+			puschind = ltePUSCHIndices(struct(ueObj),obj.PUSCH);
+			puschdrsSeq = ltePUSCHDRS(struct(ueObj),obj.PUSCH);
+			puschdrsSeqind = ltePUSCHDRSIndices(struct(ueObj),obj.PUSCH);
+			
+			%srs = lteSRS(struct(ueObj), obj.PUSCH);
+			%srsInd = lteSRSIndices(struct(ueObj), obj.PUSCH);
+			%reGrid(srsInd) = srs;
+
+			%reGrid(puschind) = puschsym;
+			reGrid(puschdrsSeqind) = puschdrsSeq;
+
 			obj.ReGrid = reGrid;
 			[obj.Waveform, obj.WaveformInfo] = lteSCFDMAModulate(ueObj,obj.ReGrid);
 			
@@ -139,6 +161,16 @@ classdef ueTransmitterModule
 			obj.Waveform = [];
 			obj.ReGrid = [];
 		end	
+
+		function plotSpectrum(obj)
+			figure
+			plot(10*log10(abs(fftshift(fft(obj.Waveform)))))
+		end
+
+		function plotResources(obj)
+			figure
+			surf(abs(obj.ReGrid))
+		end
 		
 	end
 	

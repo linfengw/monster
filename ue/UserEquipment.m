@@ -95,7 +95,12 @@ classdef UserEquipment
 			end
 			obj.Hangover = struct('TargetEnb', -1, 'HoState', 0, 'HoStart', -1, 'HoComplete', -1);
 			obj.Pmax = 10; %10dBm
-    end
+		end
+		
+		function s = struct(obj)
+			% Struct needed for MATLAB LTE Library functions.
+			s = struct('NCellID', obj.NCellID, 'NULRB', obj.NULRB, 'NSubframe', obj.NSubframe, 'NFrame', obj.NFrame, 'RNTI', obj.RNTI);
+		end
 		
 		
 		function obj = move(obj, round)

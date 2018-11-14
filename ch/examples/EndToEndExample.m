@@ -57,8 +57,14 @@ User.Rx = User.Rx.selectCqi(Station);
 %% Uplink
 User.Tx = User.Tx.mapGridAndModulate(User, Param);
 
+User.Tx.plotSpectrum()
+User.Tx.plotResources()
+
 % Traverse channel uplink
 [Station, ~] = Channel.traverse(Station,User,'uplink');
 
+Station.Rx.plotSpectrum()
+%Station.Rx.plotResources()
+
 testSubframe = lteSCFDMADemodulate(struct(User), Station.Rx.Waveform);
-[EstChannelGrid, NoiseEst] = lteULChannelEstimate(struct(User), ChannelEstimator.Uplink, testSubframe);
+[EstChannelGrid, NoiseEst] = lteULChannelEstimate(struct(User), User.Tx.PUSCH, ChannelEstimator.Uplink, testSubframe);
