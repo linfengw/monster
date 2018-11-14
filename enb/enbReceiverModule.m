@@ -2,8 +2,10 @@ classdef enbReceiverModule
 	properties
 		NoiseFigure;
 		Waveform;
+		WaveformInfo;
 		UeData;
 		RxPwdBm;
+		SNR;
 	end
 	
 	methods
@@ -24,6 +26,11 @@ classdef enbReceiverModule
 			obj.UeData = UeData;
 		end
 		
+		function plotSpectrum(obj)
+			figure
+			plot(10*log10(abs(fftshift(fft(obj.Waveform)))))
+		end
+
 		% Used to split the received waveform into the different portions of the different
 		% UEs scheduled in the UL
 		function obj = parseWaveform(obj, enbObj)

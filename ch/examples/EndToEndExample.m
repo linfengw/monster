@@ -32,14 +32,13 @@ Station.Users = struct('UeId', User.NCellID, 'CQI', -1, 'RSSI', -1);
 Station.ScheduleDL(1,1).UeId = User.NCellID;
 User.ENodeBID = Station.NCellID;
 
+%% Downlink
 Station.Tx.createReferenceSubframe();
 Station.Tx.assignReferenceSubframe();
-
 
 % Traverse channel
 [~, User] = Channel.traverse(Station,User,'downlink');
 
-%% Downlink
 % Get offset
 User.Rx.Offset = lteDLFrameOffset(Station, User.Rx.Waveform);
 % Apply offset
@@ -55,15 +54,11 @@ User.Rx = User.Rx.equaliseSubframe();
 % Calculate the CQI to use
 User.Rx = User.Rx.selectCqi(Station);
 
-%% Create uplink
-
+%% Uplink
 User.Tx = User.Tx.mapGridAndModulate(User, Param);
-figure
-surf(abs(User.Tx.ReGrid))
-figure
-plot(10*log10(abs(fftshift(fft(User.Tx.Waveform)))))
 
-%% Traverse channel uplink
+% Traverse channel uplink
 [Station, ~] = Channel.traverse(Station,User,'uplink');
 
-%% Get uplink CSI
+testSubframe = lteSCFDMADemodulate(struct(User), Station.Rx.Waveform);
+[EstChannelGrid, NoiseEst] = lteULChannelEstimate(struct(User), ChannelEstimator.Uplink, testSubframe);

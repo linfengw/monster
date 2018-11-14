@@ -11,7 +11,7 @@ classdef ueReceiverModule
 		SNR;
 		SNRdB;
 		Waveform;
-        WaveformInfo;
+    WaveformInfo;
 		RxPwdBm; % Wideband
 		IntSigLoss;
 		Subframe;

@@ -44,6 +44,38 @@ classdef sonohiBase < handle
 			
 		end
 		
+		function [stations] = uplink(obj, Stations, Users)
+			
+			stations = Stations;
+			numLinks = length(Users);
+			Pairing = obj.Channel.getPairing(Stations);
+			
+			for i = 1:numLinks
+				% Local copy for mutation
+				station = Stations([Stations.NCellID] == Pairing(1,i));
+				user = Users(find([Users.NCellID] == Pairing(2,i))); %#ok
+				
+				%% TODO: replace this with compound waveform selection (shaping of all received waveforms)
+				station = obj.setWaveform(user, station);
+				
+				% Get channel conditions (Slow variants, i.e. path loss
+				[station, ~] = obj.computeLinkBudget(station, user, 'uplink');
+				
+				if strcmp(obj.Channel.fieldType,'full')
+					if obj.Channel.enableFading
+						station = obj.addFading(user, station, 'uplink');
+					end
+					station = obj.addAWGN(user, station, 'uplink');
+				else
+					station = obj.addAWGN(user, station,  'uplink');
+				end
+				
+				
+				stations(find([Stations.NCellID] == Pairing(1,i))) = station;
+			end
+
+		end
+
 		function [users] = downlink(obj,Stations,Users)
 			% Standard downlink logic. Output of this function is written into the :class:`ue.ueReceiverModule` of the users. If the users are scheduled for transmission
 			% The downlink logic follows the follow flow
@@ -71,15 +103,15 @@ classdef sonohiBase < handle
 				user = obj.setWaveform(station, user);
 				
 				% compute link budget and calculate Receiver power
-				user = obj.computeLinkBudget(station, user);
+				[~, user] = obj.computeLinkBudget(station, user, 'downlink');
 				
 				if strcmp(obj.Channel.fieldType,'full')
 					if obj.Channel.enableFading
-						user = obj.addFading(station, user);
+						user = obj.addFading(station, user, 'downlink');
 					end
-					user = obj.addAWGN(station, user);
+					user = obj.addAWGN(station, user, 'downlink');
 				else
-					user = obj.addAWGN(station, user);
+					user = obj.addAWGN(station, user, 'downlink');
 				end
 				
 				user = obj.addPropDelay(station, user);
@@ -99,16 +131,26 @@ classdef sonohiBase < handle
 			RxNode.Rx.PropDelay = obj.Channel.getDistance(TxNode.Position, RxNode.Position);
 		end
 		
-		function [RxNode] = computeLinkBudget(obj, TxNode, RxNode)
+		function [Station, User] = computeLinkBudget(obj, Station, User, mode)
 			% Compute link budget for Tx -> Rx
 			%
 			% This requires a :meth:`computePathLoss` method, which is supplied by child classes.
 			% returns updated RxPwdBm of RxNode.Rx
-			[lossdB, RxNode] = obj.computePathLoss(TxNode, RxNode);
-			EIRPdBm = TxNode.Tx.getEIRPdBm;
-			rxPwdBm = EIRPdBm-lossdB-RxNode.Rx.NoiseFigure; %dBm
-			RxNode.Rx.RxPwdBm = rxPwdBm;
-			
+			% The channel is reciprocal in terms of received power, thus the path
+			% loss is extracted from channel conditions provided by 
+			switch mode
+				case 'downlink'
+					[lossdB, User] = obj.computePathLoss(Station, User);
+					EIRPdBm = Station.Tx.getEIRPdBm;
+					rxPwdBm = EIRPdBm-lossdB-User.Rx.NoiseFigure; %dBm
+					User.Rx.RxPwdBm = rxPwdBm;
+				case 'uplink'
+					lossdB = User.Rx.ChannelConditions.pathloss;
+					EIRPdBm = User.Tx.getEIRPdBm;
+					rxPwdBm = EIRPdBm-lossdB-Station.Rx.NoiseFigure; %dBm
+					Station.Rx.RxPwdBm = rxPwdBm;
+			end
+
 		end
 		
 		function RxNode = addFading(obj, RxNode)
@@ -156,10 +198,10 @@ classdef sonohiBase < handle
 			lossdBm = 10*log10(thermalNoise*1000);
 		end
 		
-		function [RxNode] = addAWGN(obj, TxNode, RxNode)
+		function [RxNode] = addAWGN(obj, TxNode, RxNode,mode)
 			% Adds gaussian noise based on thermal noise and calculated recieved power.
 			
-			% TODO: Gass Loss relevant to compute when moving into mmWave range
+			% TODO: Gas Loss relevant to compute when moving into mmWave range
 			%gasLossdB = obj.atmosphericLoss(TxNode, RxNode);
 			thermalLossdBm = obj.thermalLoss(RxNode);
 			
@@ -169,16 +211,21 @@ classdef sonohiBase < handle
 			SNRLin = 10^(SNR/10);
 			str1 = sprintf('Station(%i) to User(%i)\n SNR:  %s\n RxPw:  %s\n', TxNode.NCellID,RxNode.NCellID,num2str(SNR),num2str(RxNode.Rx.RxPwdBm));
 			sonohilog(str1,'NFO0');
-			Es = sqrt(2.0*TxNode.CellRefP*double(RxNode.Rx.WaveformInfo.Nfft));
 			
 			% Compute spectral noise density NO
-			N0 = 1/(Es*SNRLin);
+			switch mode
+				case 'downlink'
+				Es = sqrt(2.0*TxNode.CellRefP*double(RxNode.Rx.WaveformInfo.Nfft));
+				N0 = 1/(Es*SNRLin);
+				case 'uplink'
+				N0 = 1/(SNRLin * sqrt(double(RxNode.Rx.WaveformInfo.Nfft)))/sqrt(2);
+			end
 			
 			% Add AWGN
 			noise = N0*complex(randn(size(RxNode.Rx.Waveform)), randn(size(RxNode.Rx.Waveform)));
-			
 			rxSig = RxNode.Rx.Waveform + noise;
 			
+			% Write info to receiver object
 			RxNode.Rx.SNR = SNRLin;
 			RxNode.Rx.Waveform = rxSig;
 			

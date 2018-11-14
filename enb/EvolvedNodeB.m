@@ -46,7 +46,6 @@ classdef EvolvedNodeB
 		Seed;				%Random seed for simulation
 
 		%Other properties
-		DlFreq;				%Downlink carrier frequency in MHz
 		OCNG;				%Orthogonal Frequency Division Multiple Access Channel Noise Generator
 		Windowing;			%
 		AbsMask;			%Subframe mask
@@ -97,7 +96,6 @@ classdef EvolvedNodeB
 			obj.Neighbours = zeros(1, Param.numEnodeBs);
 			obj.HystCount = 0;
 			obj.SwitchCount = 0;
-			obj.DlFreq = Param.dlFreq;
 			if Param.rtxOn
 				obj.Mac = struct('HarqTxProcesses', harqTxBulk(Param, cellId, 1:Param.numUsers, 0));
 				obj.Rlc = struct('ArqTxBuffers', arqTxBulk(Param, cellId, 1:Param.numUsers, 0));

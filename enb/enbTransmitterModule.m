@@ -15,6 +15,7 @@ classdef enbTransmitterModule < handle
     PssRef;
 		SssRef;
 		Enb;
+		Freq; % Operating frequency in MHz
 		
 		% Reference subframes
 		Ref = struct('ReGrid',[], 'Waveform',[], 'WaveformInfo',[])
@@ -33,6 +34,7 @@ classdef enbTransmitterModule < handle
 			obj = setBCH(obj, enb);
 			obj = resetResourceGrid(obj, enb);
 			obj = initPDSCH(obj, enb.NDLRB);
+			obj.Freq = Param.dlFreq;
 			[obj.Frame, obj.FrameInfo, obj.FrameGrid] = generateDummyFrame(enb);
     end
     

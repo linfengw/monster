@@ -45,15 +45,23 @@ classdef sonohi3GPP38901 < sonohiBase
 				
 			end
 		end
-		function RxNode = addFading(obj, TxNode, RxNode)
+		function RxNode = addFading(obj, TxNode, RxNode, mode)
+			tdl = nrTDLChannel;
 			% TODO: Add MIMO to fading channel
-			v = RxNode.Mobility.Velocity * 3.6;                    % UT velocity in km/h
-			fc = TxNode.DlFreq*10e5;          % carrier frequency in Hz
+			switch mode
+				case 'downlink'
+				v = RxNode.Mobility.Velocity * 3.6;                    % UT velocity in km/h
+				tdl.TransmissionDirection = 'Downlink';
+				case 'uplink'
+				v = TxNode.Mobility.Velocity * 3.6;                    % UT velocity in km/h
+				tdl.TransmissionDirection = 'Uplink';
+			end
+			fc = TxNode.Tx.Freq*10e5;          % carrier frequency in Hz
 			c = physconst('lightspeed'); % speed of light in m/s
 			fd = (v*1000/3600)/c*fc;     % UT max Doppler frequency in Hz
 
 
-			tdl = nrTDLChannel;
+			
 			tdl.DelayProfile = 'TDL-C';
 			tdl.DelaySpread = 300e-9;
 			tdl.MaximumDopplerShift = fd;
@@ -68,7 +76,7 @@ classdef sonohi3GPP38901 < sonohiBase
 		function [mapLOS, mapNLOS, mapLOSprop, axisLOS, axisNLOS, axisLOSprop] = generateShadowMap(obj, station)
 			% .. todo:: check station.Seed is unique per station.
 			areaType = obj.Channel.getAreaType(station);
-			fMHz = station.DlFreq; % Freqency in MHz
+			fMHz = station.Tx.Freq; % Freqency in MHz
 			radius = obj.Channel.getAreaSize(); % Get range of grid
 			switch areaType
 				case 'RMa'
@@ -156,7 +164,7 @@ classdef sonohi3GPP38901 < sonohiBase
 			% * `shadowing` - Boolean for enabling/disabling shadowing using log-normal distribution
 			% * `avgBuilding` - Average height of buildings
 			% * `avgStreetWidth` - Average width of the streets
-			f = TxNode.DlFreq/10e2; % Frequency in GHz
+			f = TxNode.Tx.Freq/10e2; % Frequency in GHz
 			hBs = TxNode.Position(3);
 			hUt = RxNode.Position(3);
 			distance2d =  obj.Channel.getDistance(TxNode.Position(1:2),RxNode.Position(1:2));
@@ -202,6 +210,7 @@ classdef sonohi3GPP38901 < sonohiBase
 			end
 			            
 			% Return of channel conditions if required.
+			% TODO: For atomic reasonability, consider moving this to class properties instead. 
 			RxNode.Rx.ChannelConditions.lossdB = lossdB;
 			RxNode.Rx.ChannelConditions.LOS = LOS;
 			RxNode.Rx.ChannelConditions.LOSprop = prop;
