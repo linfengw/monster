@@ -9,7 +9,7 @@ function [frameWaveform, frameInfo, frameGrid] = generateDummyFrame(enbObj)
 %		frameInfo				->	resulting waveform info
 %		frameGrid				-> resulting transmission grid
 
-enb = cast2Struct(enbObj);
+enb = struct(enbObj);
 gridsize = lteDLResourceGridSize(enb);
 K = gridsize(1);    % Number of subcarriers
 L = gridsize(2);    % Number of OFDM symbols in one subframe

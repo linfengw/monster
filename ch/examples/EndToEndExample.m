@@ -5,11 +5,14 @@ Param.numMacro = 1;
 Param.numMicro = 0;
 Param.numPico = 0;
 Param.numUsers = 1;
+Param.draw = 0;
 Param.channel.region = struct();
 Param.channel.region.macroScenario = 'UMa';
 Param.channel.enableShadowing = true;
 Param.channel.enableFading = true;
+Param.channel.enableInterference = false;
 Param.channel.modeDL = '3GPP38901';
+Param.channel.modeUL = '3GPP38901';
 
 
 if Param.draw
@@ -29,8 +32,8 @@ Station.Users = struct('UeId', User.NCellID, 'CQI', -1, 'RSSI', -1);
 Station.ScheduleDL(1,1).UeId = User.NCellID;
 User.ENodeBID = Station.NCellID;
 
-Station.Tx.createReferenceSubframe()
-Station.Tx.assignReferenceSubframe()
+Station.Tx.createReferenceSubframe();
+Station.Tx.assignReferenceSubframe();
 
 
 % Traverse channel

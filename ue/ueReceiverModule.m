@@ -101,7 +101,7 @@ classdef ueReceiverModule
 		
 		function [returnCode, obj] = demodulateWaveform(obj,enbObj)
 			% TODO: validate that a waveform exist.
-			enb = cast2Struct(enbObj);
+			enb = struct(enbObj);
 			Subframe = lteOFDMDemodulate(enb, obj.Waveform); %#ok
 			
 			if all(Subframe(:) == 0) %#ok
@@ -115,9 +115,8 @@ classdef ueReceiverModule
 		% estimate channel at the receiver
 		function obj = estimateChannel(obj, enbObj, cec)
 			validateRxEstimateChannel(obj);
-			rx = cast2Struct(obj);
-			enb = cast2Struct(enbObj);
-			[obj.EstChannelGrid, obj.NoiseEst] = lteDLChannelEstimate(enb, cec, rx.Subframe);
+			enb = struct(enbObj);
+			[obj.EstChannelGrid, obj.NoiseEst] = lteDLChannelEstimate(enb, cec, obj.Subframe);
 		end
 		
 		% equalize at the receiver
@@ -128,13 +127,14 @@ classdef ueReceiverModule
 		
 		function obj = estimatePdsch(obj, ue, enbObj)
 			validateRxEstimatePdsch(obj);
-			% first get the PRBs that where used for the UE with this receiver
-			enb = cast2Struct(enbObj);
 			
-			obj.SchIndexes = find([enb.ScheduleDL.UeId] == ue.NCellID);
+			enb = struct(enbObj);
+			% first get the PRBs that where used for the UE with this receiver
+			
+			obj.SchIndexes = find([enbObj.ScheduleDL.UeId] == ue.NCellID);
 			
 			% Store the full PRB set for extraction
-			fullPrbSet = enb.Tx.PDSCH.PRBSet;
+			fullPrbSet = enbObj.Tx.PDSCH.PRBSet;
 			
 			% To find which received PDSCH symbols belong to this UE, we need to
 			% compute indexes for all other UEs allocated in this eNodeB, except
@@ -143,16 +143,16 @@ classdef ueReceiverModule
 			offset = 1;
 			if obj.SchIndexes(1) ~= 1
 				% extract the unique UE IDs from the schedule
-				uniqueIds = extractUniqueIds([enb.ScheduleDL.UeId]);
+				uniqueIds = extractUniqueIds([enbObj.ScheduleDL.UeId]);
 				for iUser = 1:length(uniqueIds)
 					if uniqueIds(iUser) ~= ue.NCellID
 						% get all the PRBs assigned to this UE and continue only if it's slotted before the current UE
-						prbIndices = find([enb.ScheduleDL.UeId] == uniqueIds(iUser));
+						prbIndices = find([enbObj.ScheduleDL.UeId] == uniqueIds(iUser));
 						if prbIndices(1) < obj.SchIndexes(1)
-							[~, mod, ~] = lteMCS(enb.ScheduleDL(prbIndices(1)).Mcs);
-							enb.Tx.PDSCH.Modulation = mod;
-							enb.Tx.PDSCH.PRBSet = (prbIndices - 1).';
-							uePdschIndices = ltePDSCHIndices(enb, enb.Tx.PDSCH, enb.Tx.PDSCH.PRBSet);
+							[~, mod, ~] = lteMCS(enbObj.ScheduleDL(prbIndices(1)).Mcs);
+							enbObj.Tx.PDSCH.Modulation = mod;
+							enbObj.Tx.PDSCH.PRBSet = (prbIndices - 1).';
+							uePdschIndices = ltePDSCHIndices(enb, enbObj.Tx.PDSCH, enbObj.Tx.PDSCH.PRBSet);
 							offset = offset + length(uePdschIndices);
 						end
 					end
@@ -160,13 +160,13 @@ classdef ueReceiverModule
 			end
 			
 			% Set the parameters of the PDSCH to those of the current UE
-			[~, mod, ~] = lteMCS(enb.ScheduleDL(obj.SchIndexes(1)).Mcs);
-			enb.Tx.PDSCH.Modulation = mod;
-			enb.Tx.PDSCH.PRBSet = (obj.SchIndexes - 1).';
+			[~, mod, ~] = lteMCS(enbObj.ScheduleDL(obj.SchIndexes(1)).Mcs);
+			enbObj.Tx.PDSCH.Modulation = mod;
+			enbObj.Tx.PDSCH.PRBSet = (obj.SchIndexes - 1).';
 			
 			% Now get all the PDSCH indexes and symbols out of the received grid
 			% TODO for some reasons the built-in functions only work properly with the whole PDSCH
-			fullPdschIndices = ltePDSCHIndices(enb, enb.Tx.PDSCH, fullPrbSet);
+			fullPdschIndices = ltePDSCHIndices(enb, enbObj.Tx.PDSCH, fullPrbSet);
 			[fullPdschRx, ~] = lteExtractResources(fullPdschIndices, obj.EqSubframe);
 			
 			% Filter out the PDSCH symbols and bits that are meant for this receiver.
@@ -175,7 +175,7 @@ classdef ueReceiverModule
 			uePdschRx = fullPdschRx(offset:offset + length(uePdschIndices) - 1);
 			
 			% Decode PDSCH
-			[ueDlsch, uePdsch] = ltePDSCHDecode(enb, enb.Tx.PDSCH, uePdschRx);
+			[ueDlsch, uePdsch] = ltePDSCHDecode(enb, enbObj.Tx.PDSCH, uePdschRx);
 			uePdsch = uePdsch{1};
 			ueDlsch = ueDlsch{1};
 			
@@ -183,7 +183,7 @@ classdef ueReceiverModule
 			% cases convert it
 			obj.PDSCH = uePdsch;
 			% Decode DL-SCH
-			[obj.TransportBlock, obj.Crc] = lteDLSCHDecode(enb, enb.Tx.PDSCH, ue.TransportBlockInfo.tbSize, ...
+			[obj.TransportBlock, obj.Crc] = lteDLSCHDecode(enb, enbObj.Tx.PDSCH, ue.TransportBlockInfo.tbSize, ...
 				ueDlsch);
 		end
 		
@@ -204,8 +204,8 @@ classdef ueReceiverModule
 		
 		% select CQI
 		function obj = selectCqi(obj, enbObj)
-			enb = cast2Struct(enbObj);
-			[obj.CQI, ~] = lteCQISelect(enb, enb.Tx.PDSCH, obj.EstChannelGrid, obj.NoiseEst);
+			enb = struct(enbObj); %#OK
+			[obj.CQI, ~] = lteCQISelect(enb, enbObj.Tx.PDSCH, obj.EstChannelGrid, obj.NoiseEst);
 			if isnan(obj.CQI)
 				sonohilog('CQI is NaN - something went wrong in the selection.','ERR')
 			end
@@ -224,7 +224,7 @@ classdef ueReceiverModule
 		% reference measurements
 		function obj  = referenceMeasurements(obj,enbObj)
             
-			enb = cast2Struct(enbObj);
+			enb = struct(enbObj);
 			%       RSSI is the average power of OFDM symbols containing the reference
 			%       signals
 			%       RxPw is the wideband power, e.g. the received power for the whole
@@ -313,11 +313,6 @@ classdef ueReceiverModule
       obj.Blocks = struct('tot',1,'err',1,'ok',0);
       obj.Bits = struct('tot',1,'err',1,'ok',0);
 		end
-		
-		% cast object to struct
-		function objstruct = cast2Struct(obj)
-			objstruct = struct(obj);
-    end
 		
 		% Reset receiver
 		function obj = reset(obj)

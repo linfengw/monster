@@ -105,7 +105,7 @@ classdef enbTransmitterModule < handle
     % Methods
     % set BCH
     function obj = setBCH(obj, enbObj)
-      enb = cast2Struct(enbObj);
+      enb = struct(enbObj);
       mib = lteMIB(enb);
       bchCoded = lteBCH(enb, mib);
       obj.PBCH = struct('bch', bchCoded, 'unit', 1);
@@ -113,8 +113,7 @@ classdef enbTransmitterModule < handle
     
     % Set default subframe resource grid
     function obj = resetResourceGrid(obj, enbObj)
-      enb = cast2Struct(enbObj);
-      tx = cast2Struct(obj);
+      enb = struct(enbObj);
       % Create empty grid
 			% TODO: refactor with functions for creating reference signals and
 			% synchronization signals.
@@ -146,29 +145,25 @@ classdef enbTransmitterModule < handle
       regrid(indPcfich) = pcfich;
       
       % every 10 ms we need to broadcast a unit of the BCH
-      if (mod(enb.NSubframe, 10) == 0 && tx.PBCH.unit <= 4)
-        fullPbch = ltePBCH(enb,tx.PBCH.bch);
+      if (mod(enb.NSubframe, 10) == 0 && obj.PBCH.unit <= 4)
+        fullPbch = ltePBCH(enb,obj.PBCH.bch);
         indPbch = ltePBCHIndices(enb);
         
         % find which portion of the PBCH we need to send in this frame and insert
-        a = (tx.PBCH.unit - 1) * length(indPbch) + 1;
-        b = tx.PBCH.unit * length(indPbch);
+        a = (obj.PBCH.unit - 1) * length(indPbch) + 1;
+        b = obj.PBCH.unit * length(indPbch);
         pbch = fullPbch(a:b, 1);
         regrid(indPbch) = pbch;
         
         % finally update the unit counter
-        tx.PBCH.unit = tx.PBCH.unit + 1;
+        obj.PBCH.unit = obj.PBCH.unit + 1;
       end
       
       % Write back into the objects
-      obj.PBCH = tx.PBCH;
+      obj.PBCH = obj.PBCH;
       obj.ReGrid = regrid;
     end
-    
-    % cast object to struct
-    function txStruct = cast2Struct(obj)
-      txStruct = struct(obj);
-    end
+   
     
     % Reset transmitter
     function obj = reset(obj, enbObj, nextSchRound)
@@ -188,20 +183,19 @@ classdef enbTransmitterModule < handle
     
     % modulate TX waveform
     function obj = modulateTxWaveform(obj, enbObj)
-      enb = cast2Struct(enbObj);
-      tx = cast2Struct(obj);
+      enb = struct(enbObj);
       % Add PDCCH and generate a random codeword to emulate the control info carried
       pdcchParam = ltePDCCHInfo(enb);
       ctrl = randi([0,1],pdcchParam.MTot,1);
       [pdcchSym, pdcchInfo] = ltePDCCH(enb,ctrl);
       indPdcch = ltePDCCHIndices(enb);
-      tx.ReGrid(indPdcch) = pdcchSym;
+      obj.ReGrid(indPdcch) = pdcchSym;
       % Assume lossless transmitter
-      [obj.Waveform, obj.WaveformInfo] = lteOFDMModulate(enb, tx.ReGrid);
+      [obj.Waveform, obj.WaveformInfo] = lteOFDMModulate(enb, obj.ReGrid);
       % set in the WaveformInfo the percentage of OFDM symbols used for this subframe
       % for power scaling
-      used = length(find(abs(tx.ReGrid) ~= 0));
-      obj.WaveformInfo.OfdmEnergyScale = used/numel(tx.ReGrid);
+      used = length(find(abs(obj.ReGrid) ~= 0));
+      obj.WaveformInfo.OfdmEnergyScale = used/numel(obj.ReGrid);
     end
     
     function obj = computeReferenceWaveform(obj, pss, indPss, sss, indSss, enb)
@@ -221,7 +215,7 @@ classdef enbTransmitterModule < handle
       regrid = obj.ReGrid;
       
       % get PDSCH indexes
-      [indPdsch, pdschInfo] = ltePDSCHIndices(enb, obj.PDSCH, obj.PDSCH.PRBSet);
+      [indPdsch, pdschInfo] = ltePDSCHIndices(struct(enb), obj.PDSCH, obj.PDSCH.PRBSet);
       
       % pad for unused subcarriers
       padding(1:length(indPdsch) - length(syms), 1) = 0;

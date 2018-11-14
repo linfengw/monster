@@ -121,6 +121,11 @@ classdef EvolvedNodeB
 		function obj = setPosition(obj, pos)
 			obj.Position = pos;
 		end
+
+		function s = struct(obj)
+				% Overwrites struct on object. Used primarly for lte Library methods of Matlab.
+				s = struct('NDLRB', obj.NDLRB, 'CellRefP', obj.CellRefP, 'NCellID', obj.NCellID, 'NSubframe', obj.NSubframe, 'CFI', obj.CFI, 'Ng', obj.Ng);
+		end
 		
 		% reset users
 		function obj = resetUsers(obj, Param)
@@ -143,9 +148,9 @@ classdef EvolvedNodeB
 		end
 		
 		function [indPdsch, info] = getPDSCHindicies(obj)
-			enb = cast2Struct(obj);
+			enb = struct(obj);
 			% get PDSCH indexes
-			[indPdsch, info] = ltePDSCHIndices(enb, enb.Tx.PDSCH, enb.Tx.PDSCH.PRBSet);
+			[indPdsch, info] = ltePDSCHIndices(enb, obj.Tx.PDSCH, obj.Tx.PDSCH.PRBSet);
 		end
 		
 		% create list of neighbours
@@ -245,11 +250,6 @@ classdef EvolvedNodeB
 				
 			end
 			
-		end
-		
-		% cast object to struct
-		function enbStruct = cast2Struct(obj)
-			enbStruct = struct(obj);
 		end
 		
 		% set uplink static scheduling

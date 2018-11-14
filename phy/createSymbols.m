@@ -10,7 +10,6 @@ function [Station, User] = createSymbols(Station, User)
 %   User								->	the UE for this codeword
 
 	% cast eNodeB object to struct for the processing
-	enb = struct(Station);
 	% find all the PRBs assigned to this UE to find the most conservative MCS (min)
 	sch = Station.ScheduleDL;
 	ixPRBs = find([sch.UeId] == User.NCellID);
@@ -23,11 +22,11 @@ function [Station, User] = createSymbols(Station, User)
 	cwd = User.Codeword;
 
 	% setup the PDSCH for this UE
-	enb.Tx.PDSCH.Modulation = mod;	% conservative modulation choice from above
-	enb.Tx.PDSCH.PRBSet = (ixPRBs - 1).';	% set of assigned PRBs
+	Station.Tx.PDSCH.Modulation = mod;	% conservative modulation choice from above
+	Station.Tx.PDSCH.PRBSet = (ixPRBs - 1).';	% set of assigned PRBs
 
 	% Get info and indexes
-	[pdschIxs, SymInfo] = ltePDSCHIndices(enb, enb.Tx.PDSCH, enb.Tx.PDSCH.PRBSet);
+	[pdschIxs, SymInfo] = ltePDSCHIndices(struct(Station), Station.Tx.PDSCH, Station.Tx.PDSCH.PRBSet);
 	
 	if length(cwd) ~= SymInfo.G
 		% In this case seomthing went wrong with the rate maching and in the
@@ -37,7 +36,7 @@ function [Station, User] = createSymbols(Station, User)
 
 	% error handling for symbol creation
 	try
-		sym = ltePDSCH(enb, enb.Tx.PDSCH, cwd);
+		sym = ltePDSCH(struct(Station), Station.Tx.PDSCH, cwd);
 	catch ME
 		fSpec = 'symbols generation failed for codeword with length %i\n';
 		s=sprintf(fSpec, length(cwd));
@@ -51,7 +50,7 @@ function [Station, User] = createSymbols(Station, User)
 	User.SymbolsInfo = SymInfo;
 
 	% Set the symbols into the grid of the eNodeB
-	enb.Tx = enb.Tx.setPDSCHGrid(enb, sym);
+	Station.Tx = Station.Tx.setPDSCHGrid(Station, sym);
 	% Write back into station
-	Station.Tx.ReGrid = enb.Tx.ReGrid;
+	Station.Tx.ReGrid = Station.Tx.ReGrid;
 end
