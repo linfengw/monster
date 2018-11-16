@@ -96,7 +96,7 @@ classdef ChBulk_v2 < SonohiChannel
 			obj.UplinkModel.CompoundWaveform = compoundWaveform;
 		end
 		
-		function plotHeatmap(obj, Stations, User)
+		function plotHeatmap(obj, Stations, User, figureHandle)
 			%plotHeatmap Visualizes and omputes channel path loss for all Stations
 			% 
 			% Input:
@@ -109,8 +109,8 @@ classdef ChBulk_v2 < SonohiChannel
 			
 			% Grid in meters from -2000 to 2000 in X and Y with a resolution of
 			% 120 m.
-			resolution = 120;
-			lengthXY = [-1000:resolution:1000; -1000:resolution:1000];
+			resolution = 30;
+			lengthXY = [0:resolution:600; 0:resolution:600];
 			N = length(lengthXY(1,:));
 			reverseStr = '';
 			
@@ -140,9 +140,9 @@ classdef ChBulk_v2 < SonohiChannel
 			end
 			
 			%% Plot antenna pattern
-			figure
- 			element = Stations(1).Tx.AntennaArray.Panels{1};
- 			element{1}.plotPattern()
+			%figure
+ 			%element = Stations(1).Tx.AntennaArray.Panels{1};
+ 			%element{1}.plotPattern()
 			
 			
 			
@@ -150,22 +150,22 @@ classdef ChBulk_v2 < SonohiChannel
 			colors = {'r','b','g','y','c','k'};
 			
 			h = cell(numStations,1);
-			figure
-			contourf(lengthXY(1,:), lengthXY(2,:), max(RxPw(:,:,:),[],3), 10)
-			hold on
-			for iStation = 1:numStations
-				legends{iStation} = sprintf('Station %i', iStation);
-				Stations(iStation).Tx.AntennaArray.plotBearing(Stations(iStation).Position, colors{iStation})
-				h{iStation} = plot(Stations(iStation).Position(1),Stations(iStation).Position(2),'o', 'MarkerFaceColor',colors{iStation});
-			end
-			c = colorbar;
-			c.Label.String = 'Receiver Power [dBm]';
-			c.Label.FontSize = 12;
-			colormap(hot)
-			legend([h{:}],legends{:})
-			title('Max received power.')
-			xlabel('X [m]')
-			ylabel('Y [m]')
+			% figure
+			% contourf(lengthXY(1,:), lengthXY(2,:), max(RxPw(:,:,:),[],3), 10)
+			% hold on
+			% for iStation = 1:numStations
+			% 	legends{iStation} = sprintf('Station %i', iStation);
+			% 	Stations(iStation).Tx.AntennaArray.plotBearing(Stations(iStation).Position, colors{iStation})
+			% 	h{iStation} = plot(Stations(iStation).Position(1),Stations(iStation).Position(2),'o', 'MarkerFaceColor',colors{iStation});
+			% end
+			% c = colorbar;
+			% c.Label.String = 'Receiver Power [dBm]';
+			% c.Label.FontSize = 12;
+			% colormap(hot)
+			% legend([h{:}],legends{:})
+			% title('Max received power.')
+			% xlabel('X [m]')
+			% ylabel('Y [m]')
 			
 			%% Plot of coverage for different stations.
 			RxPwThreshold = -85;
@@ -179,15 +179,16 @@ classdef ChBulk_v2 < SonohiChannel
 
 			
 			legends = cell(numStations,1);
-			figure
+			figureHandle;
+			%figure
 			hold on
 			for iStation = 1:numStations
 				legends{iStation} = sprintf('Station %i', iStation);
-				surf(lengthXY(1,:),lengthXY(2,:),stationcoverage(:,:,iStation),'FaceColor',colors{iStation},'FaceAlpha',0.5,'EdgeColor','none')
+				surf(figureHandle,lengthXY(1,:),lengthXY(2,:),stationcoverage(:,:,iStation),'FaceColor',colors{iStation},'FaceAlpha',0.5,'EdgeColor','none')
 			end
-			title(sprintf('Received power > %i dBm for all stations',RxPwThreshold))
+			%title(sprintf('Received power > %i dBm for all stations',RxPwThreshold))
 			legend(legends{:})
-			grid on
+			%grid on
 			view(2)
 			
 

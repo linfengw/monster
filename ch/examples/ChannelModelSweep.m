@@ -5,11 +5,11 @@ clear all
 close all
 load('SimulationParameters.mat');
 Param.numMacro = 1;
-Param.numMicro = 0;
+Param.numMicro = 1;
 Param.numPico = 0;
 Param.numUsers = 1;
-Param.draw = 0;
-Param.eNBAntennaType = 'Omni'; % ['3GPP38901', 'Omni']
+Param.draw = 1;
+Param.eNBAntennaType ='Omni'; % ['3GPP38901', 'Omni']
 
 
 if Param.draw
@@ -29,6 +29,8 @@ Param.channel.LOSMethod = '3GPP38901-probability';
 Param.channel.modeDL = '3GPP38901';
 Param.channel.region = struct();
 Param.channel.region.macroScenario = 'UMa';
+Param.channel.region.microScenario = 'UMi';
+Param.channel.region.picoScenario ='UMi'
 
 Param.mobilityScenario = 'pedestrian';
 ChannelUMa = ChBulk_v2(Station, User, Param);

@@ -15,6 +15,8 @@ function [Stations, Param] = createBaseStations (Param)
 	if Param.numMacro >= 0 && Param.numMacro <= 19
 		% Create position vectors for the macro and micro BSs
 		[macroPos, microPos, picoPos] = positionBaseStations(Param.numMacro, Param.numMicro, Param.numPico, Param);
+		positions = [macroPos; microPos; picoPos];
+		voronoi(Param.LayoutAxes(3),positions(:,1),positions(:,2));
 
 		% Create some indexes for ease of creation of the eNodeBs
 		macroThr = Param.numMacro;
