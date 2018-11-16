@@ -109,7 +109,7 @@ classdef ChBulk_v2 < SonohiChannel
 			
 			% Grid in meters from -2000 to 2000 in X and Y with a resolution of
 			% 120 m.
-			resolution = 30;
+			resolution = 60;
 			lengthXY = [0:resolution:600; 0:resolution:600];
 			N = length(lengthXY(1,:));
 			reverseStr = '';

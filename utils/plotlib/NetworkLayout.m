@@ -29,100 +29,100 @@ classdef NetworkLayout < handle
 
         function draweNBs(obj, Param)
             buildings = Param.buildings;
-
             %Find simulation area
             area = [min(buildings(:, 1)), min(buildings(:, 2)), max(buildings(:, 3)), ...
                 max(buildings(:, 4))];
 
             % Draw grid first
+            for iFig=1:length(Param.LayoutAxes)
+                for i = 1:length(buildings(:,1))
+                    x0 = buildings(i,1);
+                    y0 = buildings(i,2);
+                    x = buildings(i,3)-x0;
+                    y = buildings(i,4)-y0;
+                    rectangle(Param.LayoutAxes(iFig),'Position',[x0 y0 x y],'FaceColor',[0.9 .9 .9 0.4],'EdgeColor',[1 1 1 0.6])
+                end
 
-            for i = 1:length(buildings(:,1))
-                x0 = buildings(i,1);
-                y0 = buildings(i,2);
-                x = buildings(i,3)-x0;
-                y = buildings(i,4)-y0;
-                rectangle(Param.LayoutAxes,'Position',[x0 y0 x y],'FaceColor',[0.9 .9 .9 0.4],'EdgeColor',[1 1 1 0.6])
-            end
+                %Draw macros
+                for i=1:obj.NumMacro
+                    xc = obj.Cells{i}.Center(1);
+                    yc = obj.Cells{i}.Center(2);
+                    text(Param.LayoutAxes(iFig),xc,yc-20,strcat('Macro BS (',num2str(round(xc)),', ',num2str(round(yc)),')'),'HorizontalAlignment','center');
+                    [macroImg, ~, alpha] = imread('utils/images/macro.png');
+                    % For some magical reason the image is rotated 180 degrees.
+                    macroImg = imrotate(macroImg,180);
+                    alpha = imrotate(alpha,180);
+                    % Scale size of figure
+                    scale = 30;
+                    macroLengthY = length(macroImg(:,1,1))/scale;
+                    macroLengthX = length(macroImg(1,:,1))/scale;
+                    % Position and set alpha from png image
+                    f = imagesc(Param.LayoutAxes(iFig),[xc-macroLengthX xc+macroLengthX],[yc-macroLengthY yc+macroLengthY],macroImg);
+                    set(f, 'AlphaData', alpha);
+                    %Draw 3 sectors as hexagons (flat top and bottom)		
+                    theta = pi/3;
+                    xyHex = zeros(7,2);
+                    for i=1:3 
+                        cHex = [(xc + obj.Cells{1}.CellRadius * cos((i-1)*2*theta)) ...
+                                (yc + obj.Cells{1}.CellRadius * sin((i-1)*2*theta))];
+                        for j=1:7
+                            xyHex(j,1) = cHex(1) + obj.Cells{1}.CellRadius*cos(j*theta);
+                            xyHex(j,2) = cHex(2) + obj.Cells{1}.CellRadius*sin(j*theta);
+                        end
 
-            %Draw macros
-            for i=1:obj.NumMacro
-                xc = obj.Cells{i}.Center(1);
-                yc = obj.Cells{i}.Center(2);
-                text(Param.LayoutAxes,xc,yc-20,strcat('Macro BS (',num2str(round(xc)),', ',num2str(round(yc)),')'),'HorizontalAlignment','center');
-                [macroImg, ~, alpha] = imread('utils/images/macro.png');
+                        l = line(Param.LayoutAxes(iFig),xyHex(:,1),xyHex(:,2), 'Color', 'k');
+                        set(get(get(l,'Annotation'),'LegendInformation'),'IconDisplayStyle','off')
+
+                    end
+                end
+
+                %Draw Micros
+                [microImg, ~, alpha] = imread('utils/images/micro.png');
                 % For some magical reason the image is rotated 180 degrees.
-                macroImg = imrotate(macroImg,180);
+                microImg = imrotate(microImg,180);
                 alpha = imrotate(alpha,180);
                 % Scale size of figure
                 scale = 30;
-                macroLengthY = length(macroImg(:,1,1))/scale;
-                macroLengthX = length(macroImg(1,:,1))/scale;
-                % Position and set alpha from png image
-                f = imagesc(Param.LayoutAxes,[xc-macroLengthX xc+macroLengthX],[yc-macroLengthY yc+macroLengthY],macroImg);
-                set(f, 'AlphaData', alpha);
-                %Draw 3 sectors as hexagons (flat top and bottom)		
-                theta = pi/3;
-                xyHex = zeros(7,2);
-                for i=1:3 
-                    cHex = [(xc + obj.Cells{1}.CellRadius * cos((i-1)*2*theta)) ...
-                            (yc + obj.Cells{1}.CellRadius * sin((i-1)*2*theta))];
-                    for j=1:7
-                        xyHex(j,1) = cHex(1) + obj.Cells{1}.CellRadius*cos(j*theta);
-                        xyHex(j,2) = cHex(2) + obj.Cells{1}.CellRadius*sin(j*theta);
-                    end
+                microLengthY = length(microImg(:,1,1))/scale;
+                microLengthX = length(microImg(1,:,1))/scale;
 
-                    l = line(Param.LayoutAxes,xyHex(:,1),xyHex(:,2), 'Color', 'k');
-                    set(get(get(l,'Annotation'),'LegendInformation'),'IconDisplayStyle','off')
+                for i=1:obj.NumMicro
+                    % d = sqrt((macroPos(1, 1) - microPos(i,1)) ^ 2 + (macroPos(1, 2) - microPos(i,2)) ^ 2);
+                    % if d< maxInterferrenceDistMicro2Macro
+                    % 	sonohilog(strcat('Warning! Too high interferrence detected between macro and micro BST at',num2str(microPos(i,1)),',',num2str(microPos(i,2))),'WRN');
+                    % end
+                    xr = obj.MicroCoordinates(i,1);
+                    yr = obj.MicroCoordinates(i,2);
 
+                    f = imagesc(Param.LayoutAxes(iFig),[xr-microLengthX xr+microLengthX],[yr-microLengthY yr+microLengthY],microImg);
+                    set(f, 'AlphaData', alpha);
+                    
+                    text(Param.LayoutAxes(iFig),xr,yr+20,strcat('Micro BS ', num2str(i+1),' (',num2str(round(xr)),', ', ...
+                        num2str(round(yr)),')'),'HorizontalAlignment','center','FontSize',9);
                 end
-            end
 
-            %Draw Micros
-            [microImg, ~, alpha] = imread('utils/images/micro.png');
-            % For some magical reason the image is rotated 180 degrees.
-            microImg = imrotate(microImg,180);
-            alpha = imrotate(alpha,180);
-            % Scale size of figure
-            scale = 30;
-            microLengthY = length(microImg(:,1,1))/scale;
-            microLengthX = length(microImg(1,:,1))/scale;
+                %Draw Picos
+                [picoImg, ~, alpha] = imread('utils/images/pico.png');
+                % For some magical reason the image is rotated 180 degrees.
+                picoImg = imrotate(picoImg,180);
+                alpha = imrotate(alpha,180);
+                % Scale size of figure
+                scale = 30;
+                picoLengthY = length(picoImg(:,1,1))/scale;
+                picoLengthX = length(picoImg(1,:,1))/scale;
 
-            for i=1:obj.NumMicro
-                % d = sqrt((macroPos(1, 1) - microPos(i,1)) ^ 2 + (macroPos(1, 2) - microPos(i,2)) ^ 2);
-                % if d< maxInterferrenceDistMicro2Macro
-                % 	sonohilog(strcat('Warning! Too high interferrence detected between macro and micro BST at',num2str(microPos(i,1)),',',num2str(microPos(i,2))),'WRN');
-                % end
-                xr = obj.MicroCoordinates(i,1);
-                yr = obj.MicroCoordinates(i,2);
-
-                f = imagesc(Param.LayoutAxes,[xr-microLengthX xr+microLengthX],[yr-microLengthY yr+microLengthY],microImg);
-                set(f, 'AlphaData', alpha);
-                
-                text(xr,yr+20,strcat('Micro BS ', num2str(i+1),' (',num2str(round(xr)),', ', ...
-                    num2str(round(yr)),')'),'HorizontalAlignment','center','FontSize',9);
-            end
-
-            %Draw Picos
-            [picoImg, ~, alpha] = imread('utils/images/pico.png');
-            % For some magical reason the image is rotated 180 degrees.
-            picoImg = imrotate(picoImg,180);
-            alpha = imrotate(alpha,180);
-            % Scale size of figure
-            scale = 30;
-            picoLengthY = length(picoImg(:,1,1))/scale;
-            picoLengthX = length(picoImg(1,:,1))/scale;
-
-            for i=1:obj.NumPico
-                x = obj.PicoCoordinates(i,1);
-                y = obj.PicoCoordinates(i,2);
-                text(x,y+20,strcat('Pico BS ', num2str(i+1),' (',num2str(round(x)),', ', ...
-                    num2str(round(y)),')'),'HorizontalAlignment','center','FontSize',9);
-                        
-                f = imagesc(Param.LayoutAxes,[x-picoLengthX x+picoLengthX],[y-picoLengthY y+picoLengthY],picoImg);
-                set(f, 'AlphaData', alpha);
-                drawnow
-                
-        
+                for i=1:obj.NumPico
+                    x = obj.PicoCoordinates(i,1);
+                    y = obj.PicoCoordinates(i,2);
+                    text(Param.LayoutAxes(iFig),x,y+20,strcat('Pico BS ', num2str(i+1),' (',num2str(round(x)),', ', ...
+                        num2str(round(y)),')'),'HorizontalAlignment','center','FontSize',9);
+                            
+                    f = imagesc(Param.LayoutAxes(iFig),[x-picoLengthX x+picoLengthX],[y-picoLengthY y+picoLengthY],picoImg);
+                    set(f, 'AlphaData', alpha);
+                    drawnow
+                    
+            
+                end
             end
         end
     end
