@@ -6,6 +6,7 @@ Param.numMicro = 0;
 Param.numPico = 0;
 Param.numUsers = 1;
 Param.draw = 0;
+Param.schRounds = 800;
 Param.channel.region = struct();
 Param.channel.region.macroScenario = 'UMa';
 Param.channel.enableShadowing = true;
@@ -33,17 +34,21 @@ Station.ScheduleDL(1,1).UeId = User.NCellID;
 User.ENodeBID = Station.NCellID;
 
 %% Downlink
+downlink_cqi = nan(Param.schRounds,1);
+for subframe = 1:Param.schRounds
+Station.NSubframe = subframe-1;
 Station.Tx.createReferenceSubframe();
 Station.Tx.assignReferenceSubframe();
 
 % Traverse channel
+Channel.iRound = subframe-1;
 [~, User] = Channel.traverse(Station,User,'downlink');
 
 % Get offset
 User.Rx.Offset = lteDLFrameOffset(Station, User.Rx.Waveform);
 % Apply offset
 User.Rx.Waveform = User.Rx.Waveform(1+User.Rx.Offset:end);
-% UE reference measurements
+% UE reference measurements 
 User.Rx = User.Rx.referenceMeasurements(Station);
 % Demod waveform
 [demodBool, User.Rx] = User.Rx.demodulateWaveform(Station);
@@ -53,6 +58,9 @@ User.Rx = User.Rx.estimateChannel(Station, ChannelEstimator.Downlink);
 User.Rx = User.Rx.equaliseSubframe();
 % Calculate the CQI to use
 User.Rx = User.Rx.selectCqi(Station);
+fprintf("Subframe %i Downlink CQI: %i \n", subframe-1, User.Rx.CQI)
+downlink_cqi(subframe) = User.Rx.CQI;
+end
 
 %% Uplink
 User.Tx = User.Tx.mapGridAndModulate(User, Param);
@@ -70,7 +78,7 @@ testSubframe = lteSCFDMADemodulate(struct(User), setPower(Station.Rx.Waveform, S
 [EstChannelGrid, NoiseEst] = lteULChannelEstimate(struct(User), User.Tx.PUSCH, ChannelEstimator.Uplink, testSubframe);
 [EqGrid, csi] = lteEqualizeMMSE(testSubframe, EstChannelGrid, NoiseEst);
 
-fprintf("Downlink CQI: %i\n",User.Rx.CQI)
+
 
 figure
 subplot(2,1,1)
@@ -83,3 +91,15 @@ subplot(2,1,1)
 mesh(abs(User.Rx.EqSubframe))
 subplot(2,1,2)
 mesh(abs(EqGrid))
+
+figure
+plot(downlink_cqi_fading_tdlc)
+hold on
+plot(downlink_cqi_fading_tdla)
+plot(downlink_cqi_nofading)
+
+legend('TDL-C profile', 'TDL-A profile', 'no fading')
+xlabel('Subframe #')
+ylabel('CQI downlink')
+ylim([0 16])
+

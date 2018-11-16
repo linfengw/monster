@@ -48,7 +48,7 @@ classdef SonohiChannel < handle
 			
 			% Construct cells for storing channel conditions
 			obj.DLChannelConditions = cell(Param.numEnodeBs, Param.numUsers, Param.schRounds);
-			obj.ULChannelConditions = cell(Param.numEnodeBs, Param.numUsers);
+			obj.ULChannelConditions = cell(Param.numEnodeBs, Param.numUsers, Param.schRounds);
 			
 			obj.Model = obj.findChannelClass();
 			obj.Model.setup(Stations, Users, Param);
@@ -60,12 +60,19 @@ classdef SonohiChannel < handle
 			
 		end
 
-		function obj = storeDLChannelCondition(obj, Station, User, condition, value)
-			idx = [Station.NCellID, User.NCellID, obj.iRound+1];
-			if isempty(obj.DLChannelConditions{idx(1), idx(2), idx(3)})
-				obj.DLChannelConditions{idx(1), idx(2), idx(3)} = struct();
+		function obj = storeChannelCondition(obj, TxNode, RxNode, condition, value)
+			if isa(TxNode, 'EvolvedNodeB')
+				chtype = 'DLChannelConditions';
+			elseif isa(TxNode, 'UserEquipment')
+				chtype = 'ULChannelConditions';
 			end
-			obj.DLChannelConditions{idx(1), idx(2), idx(3)}.(condition) = value;
+
+			idx = [TxNode.NCellID, RxNode.NCellID, obj.iRound+1];
+
+			if isempty(obj.(chtype){idx(1), idx(2), idx(3)})
+				obj.(chtype){idx(1), idx(2), idx(3)} = struct();
+			end
+			obj.(chtype){idx(1), idx(2), idx(3)}.(condition) = value;
 		end
 		
 	end

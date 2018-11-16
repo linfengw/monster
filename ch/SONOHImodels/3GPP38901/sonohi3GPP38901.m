@@ -45,31 +45,54 @@ classdef sonohi3GPP38901 < sonohiBase
 			end
 		end
 		function RxNode = addFading(obj, TxNode, RxNode, mode)
-			tdl = nrTDLChannel;
-			% TODO: Add MIMO to fading channel
+			fadingmodel = 'tdl';
+
 			switch mode
 				case 'downlink'
 				v = RxNode.Mobility.Velocity * 3.6;                    % UT velocity in km/h
-				tdl.TransmissionDirection = 'Downlink';
 				case 'uplink'
 				v = TxNode.Mobility.Velocity * 3.6;                    % UT velocity in km/h
-				tdl.TransmissionDirection = 'Uplink';
 			end
+
 			fc = TxNode.Tx.Freq*10e5;          % carrier frequency in Hz
 			c = physconst('lightspeed'); % speed of light in m/s
 			fd = (v*1000/3600)/c*fc;     % UT max Doppler frequency in Hz
-
-
-			
-			tdl.DelayProfile = 'TDL-C';
-			tdl.DelaySpread = 300e-9;
-			tdl.MaximumDopplerShift = fd;
-			tdl.SampleRate = TxNode.Tx.WaveformInfo.SamplingRate;
-			%tdl.InitialTime = 
-			tdl.NumTransmitAntennas = 1;
-			tdl.NumReceiveAntennas = 1;
 			sig = [RxNode.Rx.Waveform;zeros(200,1)];
-			RxNode.Rx.Waveform = tdl(sig);
+
+			switch fadingmodel
+				case 'cdl'
+
+					cdl = nrCDLChannel;
+					cdl.DelayProfile = 'CDL-A';
+					cdl.DelaySpread = 300e-9;
+					cdl.CarrierFrequency = fc;
+					cdl.MaximumDopplerShift = fd;
+					cdl.SampleRate = TxNode.Tx.WaveformInfo.SamplingRate;
+					cdl.InitialTime = obj.Channel.getSimTime();
+					cdl.TransmitAntennaArray.Size = [1 1 1 1 1];
+					cdl.ReceiveAntennaArray.Size = [1 1 1 1 1];
+					RxNode.Rx.Waveform = cdl(sig);
+				case 'tdl'
+
+					tdl = nrTDLChannel;
+					switch mode
+						case 'downlink'
+						tdl.TransmissionDirection = 'Downlink';
+						case 'uplink'
+						tdl.TransmissionDirection = 'Uplink';
+					end
+					% TODO: Add MIMO to fading channel
+					tdl.DelayProfile = 'TDL-A';
+					tdl.DelaySpread = 300e-9;
+					tdl.MaximumDopplerShift = fd;
+					tdl.SampleRate = TxNode.Tx.WaveformInfo.SamplingRate;
+					tdl.InitialTime = obj.Channel.getSimTime();
+					tdl.NumTransmitAntennas = 1;
+					tdl.NumReceiveAntennas = 1;
+
+					RxNode.Rx.Waveform = tdl(sig);
+
+				end
 		end
 		
 		function [mapLOS, mapNLOS, mapLOSprop, axisLOS, axisNLOS, axisLOSprop] = generateShadowMap(obj, station)
@@ -149,7 +172,7 @@ classdef sonohi3GPP38901 < sonohiBase
         
         
 		
-		function [lossdB] = computePathLoss(obj, TxNode, RxNode)
+		function [lossdB] = computePathLoss(obj, TxNode, RxNode, Freq)
 			% Computes path loss. uses the following parameters
 			%
 			% ..todo:: Compute indoor depth from mobility class
@@ -163,7 +186,7 @@ classdef sonohi3GPP38901 < sonohiBase
 			% * `shadowing` - Boolean for enabling/disabling shadowing using log-normal distribution
 			% * `avgBuilding` - Average height of buildings
 			% * `avgStreetWidth` - Average width of the streets
-			f = TxNode.Tx.Freq/10e2; % Frequency in GHz
+			f = Freq/10e2; % Frequency in GHz
 			hBs = TxNode.Position(3);
 			hUt = RxNode.Position(3);
 			distance2d =  obj.Channel.getDistance(TxNode.Position(1:2),RxNode.Position(1:2));
@@ -204,23 +227,23 @@ classdef sonohi3GPP38901 < sonohiBase
 				PL_in  = indoorloss3gpp38901(areatype);
 				indoorLosses = PL_tw + PL_in + randn(1, 1)*sigma_P;
 				lossdB = lossdB + indoorLosses;
-				RxNode.Rx.ChannelConditions.IndoorLoss = indoorLosses;
+				obj.Channel.storeChannelCondition(TxNode, RxNode, 'IndoorLoss', indoorLosses);
 
 			end
 			            
 			% Return of channel conditions if required.
 			% TODO: For atomic reasonability, consider moving this to class properties instead. 
-			obj.Channel.storeDLChannelCondition(TxNode, RxNode, 'baseloss', lossdB);
-			obj.Channel.storeDLChannelCondition(TxNode, RxNode, 'LOS', LOS);
-			obj.Channel.storeDLChannelCondition(TxNode, RxNode, 'LOSprop', prop);
+			obj.Channel.storeChannelCondition(TxNode, RxNode, 'baseloss', lossdB);
+			obj.Channel.storeChannelCondition(TxNode, RxNode, 'LOS', LOS);
+			obj.Channel.storeChannelCondition(TxNode, RxNode, 'LOSprop', prop);
 			
 			if shadowing
 				XCorr = obj.computeShadowingLoss(TxNode.NCellID, RxNode.Position, LOS);
-				obj.Channel.storeDLChannelCondition(TxNode, RxNode, 'LSP', XCorr); % Only large scale parameters at the moment is shadowing.
+				obj.Channel.storeChannelCondition(TxNode, RxNode, 'LSP', XCorr); % Only large scale parameters at the moment is shadowing.
 				lossdB = lossdB + XCorr;
 			end
 
-			obj.Channel.storeDLChannelCondition(TxNode, RxNode, 'pathloss', lossdB);
+			obj.Channel.storeChannelCondition(TxNode, RxNode, 'pathloss', lossdB);
 
 		end
 		

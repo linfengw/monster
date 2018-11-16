@@ -138,63 +138,19 @@ classdef sonohiBase < handle
 			% loss is extracted from channel conditions provided by 
 			switch mode
 				case 'downlink'
-					lossdB = obj.computePathLoss(Station, User);
+					lossdB = obj.computePathLoss(Station, User, Station.Tx.Freq);
 					EIRPdBm = Station.Tx.getEIRPdBm;
 					rxPwdBm = EIRPdBm-lossdB-User.Rx.NoiseFigure; %dBm
 					User.Rx.RxPwdBm = rxPwdBm;
 				case 'uplink'
-					lossdB = obj.computePathLoss(Station, User);
+					lossdB = obj.computePathLoss(Station, User, User.Tx.Freq);
 					EIRPdBm = User.Tx.getEIRPdBm;
 					rxPwdBm = EIRPdBm-lossdB-Station.Rx.NoiseFigure; %dBm
 					Station.Rx.RxPwdBm = rxPwdBm;
 			end
 
 		end
-		
-		function RxNode = addFading(obj, RxNode)
-			% Adds fading using lteFadingChannel
-			cfg.SamplingRate = RxNode.Rx.WaveformInfo.SamplingRate;
-			cfg.Seed = obj.Channel.getLinkSeed(RxNode);        % Rx specific seed
-			cfg.NRxAnts = 1;               % 1 receive antenna
-			cfg.DelayProfile = 'EPA';      % EVA delay spread
-			cfg.DopplerFreq = 5;         % 120Hz Doppler frequency
-			cfg.MIMOCorrelation = 'Low';   % Low (no) MIMO correlation
-			cfg.InitTime = obj.Channel.getSimTime();  % Initialization relative to sim time
-			cfg.NTerms = 16;               % Oscillators used in fading model
-			cfg.ModelType = 'GMEDS';       % Rayleigh fading model type
-			cfg.InitPhase = 'Random';      % Random initial phases
-			cfg.NormalizePathGains = 'On'; % Normalize delay profile power
-			cfg.NormalizeTxAnts = 'On';    % Normalize for transmit antennas
-			% Pass data through the fading channel model
-			sig = [RxNode.Rx.Waveform;zeros(25,1)];
-			rxsig = lteFadingChannel(cfg,sig);
-			RxNode.Rx.Waveform = rxsig;
-		end
-		
-		function lossdB = atmosphericLoss(obj, TxNode, RxNode)
-			% Compute atmospheric loss based on
-			%
-			% * dry air preassure of 101300 Pa
-			% * water vapour density 7.5 g/m^3
-			% * Tempature 23 degrees calsius
-			P = 101300; % dry air pressure in Pa
-			ROU = 7.5;  % water vapour density in g/m^3
-			freq = TxNode.DlFreq*10e6; % To Hz
-			T = 23;
-			R0 = obj.Channel.getDistance(TxNode.Position, RxNode.Position)/1000;
-			lossdB = 10*log10(gaspl(R0,freq,T,P,ROU));
-		end
-		
-		function lossdBm = thermalLoss(obj, RxNode)
-			% Compute thermal loss based on bandwidth, at T = 290 K.
-			% Worst case given by the number of resource blocks. Bandwidth is
-			% given based on the waveform. Computed using matlabs :obj:`obw`
-			bw = obw(RxNode.Rx.Waveform, RxNode.Rx.WaveformInfo.SamplingRate);
-			T = 290;
-			k = physconst('Boltzmann');
-			thermalNoise = k*T*bw;
-			lossdBm = 10*log10(thermalNoise*1000);
-		end
+
 		
 		function [RxNode] = addAWGN(obj, TxNode, RxNode,mode)
 			% Adds gaussian noise based on thermal noise and calculated recieved power.
@@ -239,6 +195,17 @@ classdef sonohiBase < handle
 			% Copies waveform and waveform info to Rx module, enables transmission.
 			RxNode.Rx.Waveform = TxNode.Tx.Waveform;
 			RxNode.Rx.WaveformInfo =  TxNode.Tx.WaveformInfo;
+		end
+		
+		function lossdBm = thermalLoss(RxNode)
+			% Compute thermal loss based on bandwidth, at T = 290 K.
+			% Worst case given by the number of resource blocks. Bandwidth is
+			% given based on the waveform. Computed using matlabs :obj:`obw`
+			bw = obw(RxNode.Rx.Waveform, RxNode.Rx.WaveformInfo.SamplingRate);
+			T = 290;
+			k = physconst('Boltzmann');
+			thermalNoise = k*T*bw;
+			lossdBm = 10*log10(thermalNoise*1000);
 		end
 		
 		

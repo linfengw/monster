@@ -229,7 +229,18 @@ classdef enbTransmitterModule < handle
       % Set back in object
       obj.ReGrid = regrid;
       
-    end
+		end
+		
+		function plotSpectrum(obj)
+			figure
+			plot(10*log10(abs(fftshift(fft(obj.Waveform)))))
+		end
+
+		function plotResources(obj)
+			figure
+			surf(abs(obj.ReGrid))
+		end
+
   end
   
   methods (Access = private)

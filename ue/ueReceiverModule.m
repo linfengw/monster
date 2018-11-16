@@ -342,6 +342,12 @@ classdef ueReceiverModule
 			obj.Blocks = struct('ok', 0, 'err', 0, 'tot', 0);
 			obj.Bits = struct('ok', 0, 'err', 0, 'tot', 0);
 		end
+
+
+		function plotSpectrum(obj)
+			figure
+			plot(10*log10(abs(fftshift(fft(obj.Waveform)))))
+		end
 		
 	end
 	
