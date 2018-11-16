@@ -1,4 +1,4 @@
-classdef ueReceiverModule
+classdef ueReceiverModule < handle
 	properties
 		NoiseFigure;
 		EstChannelGrid;
@@ -31,6 +31,7 @@ classdef ueReceiverModule
 		PDSCH;
 		PropDelay;
 		HistoryStats;
+		Demod;
         ChannelConditions = struct(); % Storage of channel conditions
 	end
 	
@@ -99,17 +100,42 @@ classdef ueReceiverModule
 		function obj = set.Bits(obj, bits)
 			obj.Bits = bits;
 		end
+
+		function obj = receiveDownlink(obj, enb, cec)
+			% Apply the receiver chain for subframe recovery
+			
+			% Find synchronization, apply offset
+			obj.computeOffset(enb);
+			obj.applyOffset();
+			
+			% Conduct reference measurements
+			obj.referenceMeasurements(enb);
+			
+			% Demodulate waveform
+			obj.demodulateWaveform(enb);
+			
+			% Estimate the channel
+			obj.estimateChannel(enb, cec);
+			
+			% Apply equalization
+			obj.equaliseSubframe();
+			
+			% Select CQI
+			obj.selectCqi(enb);
+	
+			% TODO: Select PMI, RI
+		end
 		
-		function [returnCode, obj] = demodulateWaveform(obj,enbObj)
+		function obj = demodulateWaveform(obj,enbObj)
 			% TODO: validate that a waveform exist.
 			enb = struct(enbObj);
 			Subframe = lteOFDMDemodulate(enb, obj.Waveform); %#ok
 			
 			if all(Subframe(:) == 0) %#ok
-				returnCode = 0;
+				obj.Demod = 0;
 			else
 				obj.Subframe = Subframe; %#ok
-				returnCode = 1;
+				obj.Demod = 1;
 			end
 		end
 		

@@ -44,20 +44,7 @@ Station.Tx.assignReferenceSubframe();
 Channel.iRound = subframe-1;
 [~, User] = Channel.traverse(Station,User,'downlink');
 
-% Get offset
-User.Rx.Offset = lteDLFrameOffset(Station, User.Rx.Waveform);
-% Apply offset
-User.Rx.Waveform = User.Rx.Waveform(1+User.Rx.Offset:end);
-% UE reference measurements 
-User.Rx = User.Rx.referenceMeasurements(Station);
-% Demod waveform
-[demodBool, User.Rx] = User.Rx.demodulateWaveform(Station);
-% Estimate Channel
-User.Rx = User.Rx.estimateChannel(Station, ChannelEstimator.Downlink);
-% Equalize signal
-User.Rx = User.Rx.equaliseSubframe();
-% Calculate the CQI to use
-User.Rx = User.Rx.selectCqi(Station);
+User.Rx.receiveDownlink(Station, ChannelEstimator.Downlink);
 fprintf("Subframe %i Downlink CQI: %i \n", subframe-1, User.Rx.CQI)
 downlink_cqi(subframe) = User.Rx.CQI;
 end
@@ -74,6 +61,7 @@ User.Tx.plotResources()
 Station.Rx.plotSpectrum()
 %Station.Rx.plotResources()
 
+% TODO: move this to Rx module logic
 testSubframe = lteSCFDMADemodulate(struct(User), setPower(Station.Rx.Waveform, Station.Rx.RxPwdBm) );
 [EstChannelGrid, NoiseEst] = lteULChannelEstimate(struct(User), User.Tx.PUSCH, ChannelEstimator.Uplink, testSubframe);
 [EqGrid, csi] = lteEqualizeMMSE(testSubframe, EstChannelGrid, NoiseEst);
