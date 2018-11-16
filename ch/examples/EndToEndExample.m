@@ -66,5 +66,20 @@ User.Tx.plotResources()
 Station.Rx.plotSpectrum()
 %Station.Rx.plotResources()
 
-testSubframe = lteSCFDMADemodulate(struct(User), Station.Rx.Waveform);
+testSubframe = lteSCFDMADemodulate(struct(User), setPower(Station.Rx.Waveform, Station.Rx.RxPwdBm) );
 [EstChannelGrid, NoiseEst] = lteULChannelEstimate(struct(User), User.Tx.PUSCH, ChannelEstimator.Uplink, testSubframe);
+[EqGrid, csi] = lteEqualizeMMSE(testSubframe, EstChannelGrid, NoiseEst);
+
+fprintf("Downlink CQI: %i\n",User.Rx.CQI)
+
+figure
+subplot(2,1,1)
+mesh(abs(User.Rx.CSI))
+subplot(2,1,2)
+mesh(abs(csi))
+
+figure
+subplot(2,1,1)
+mesh(abs(User.Rx.EqSubframe))
+subplot(2,1,2)
+mesh(abs(EqGrid))

@@ -3,21 +3,19 @@ classdef sonohiBase < handle
 	
 	properties
 		Channel % For accessing variables in the channel coordinator :class:`ch.SonohiChannel`
-		Chtype % Chtype: `'Downlink'` or `'Uplink'` switcher that executes :meth:`downlink` or :meth:`uplink`
 	end
 	
 	methods
-		function obj = sonohiBase(Channel, Chtype)
+		function obj = sonohiBase(Channel)
 			sonohilog('Initializing channel model.','NFO0')
 			obj.Channel = Channel;
-			obj.Chtype = Chtype;
 		end
 
 		function obj = setup(obj, ~, ~, ~)
 			% pass
 		end
 		
-		function [stations,users] = run(obj,Stations,Users,varargin)
+		function [stations,users] = run(obj,Stations,Users, chtype, varargin)
 			% Main execution method, switches between uplink and downlink logic.
 			%
 			% :param varargin: If the channel property needs to be updated before execution it can be added as 'channel, :class:`ch.SonohiChannel`'
@@ -33,7 +31,7 @@ classdef sonohiBase < handle
 			end
 			
 			
-			switch obj.Chtype
+			switch chtype
 				case 'downlink'
 					users = obj.downlink(Stations,Users);
 					stations = Stations;
@@ -140,12 +138,12 @@ classdef sonohiBase < handle
 			% loss is extracted from channel conditions provided by 
 			switch mode
 				case 'downlink'
-					[lossdB, User] = obj.computePathLoss(Station, User);
+					lossdB = obj.computePathLoss(Station, User);
 					EIRPdBm = Station.Tx.getEIRPdBm;
 					rxPwdBm = EIRPdBm-lossdB-User.Rx.NoiseFigure; %dBm
 					User.Rx.RxPwdBm = rxPwdBm;
 				case 'uplink'
-					lossdB = User.Rx.ChannelConditions.pathloss;
+					lossdB = obj.computePathLoss(Station, User);
 					EIRPdBm = User.Tx.getEIRPdBm;
 					rxPwdBm = EIRPdBm-lossdB-Station.Rx.NoiseFigure; %dBm
 					Station.Rx.RxPwdBm = rxPwdBm;

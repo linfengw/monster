@@ -21,6 +21,7 @@ classdef ueReceiverModule
 		PreEvm;
 		PostEvm;
 		CQI;
+		CSI;
 		Offset;
 		BLER;
 		Throughput;
@@ -122,7 +123,7 @@ classdef ueReceiverModule
 		% equalize at the receiver
 		function obj = equaliseSubframe(obj)
 			validateRxEqualise(obj);
-			obj.EqSubframe = lteEqualizeMMSE(obj.Subframe, obj.EstChannelGrid, obj.NoiseEst);
+			[obj.EqSubframe, obj.CSI] = lteEqualizeMMSE(obj.Subframe, obj.EstChannelGrid, obj.NoiseEst);
 		end
 		
 		function obj = estimatePdsch(obj, ue, enbObj)

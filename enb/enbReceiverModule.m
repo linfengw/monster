@@ -66,8 +66,8 @@ classdef enbReceiverModule
 		function obj = estimateChannels(obj, ueObjs, cec)
 			for iUser = 1:length(ueObjs)
 				localIndex = find([obj.UeData.UeId] == ueObjs(iUser).NCellID);
-				ue = cast2Struct(ueObjs(iUser));
-				if (ue.Tx.PUSCH.Active)
+				ue = struct(ueObjs(iUser));
+				if (ueObjs(iUser).Tx.PUSCH.Active)
 					[obj.UeData(localIndex).EstChannelGrid, obj.UeData(localIndex).NoiseEst] = ...
 						lteULChannelEstimate(ue, cec, obj.UeData(localIndex).Subframe);
 				end
@@ -77,8 +77,9 @@ classdef enbReceiverModule
 		function obj = equaliseSubframes(obj, ueObjs)
 			for iUser = 1:length(ueObjs)
 				localIndex = find([obj.UeData.UeId] == ueObjs(iUser).NCellID);
-				ue = cast2Struct(ueObjs(iUser));
-				if (ue.Tx.PUSCH.Active)
+				ue = struct(ueObjs(iUser));
+				ueObj = ueObjs(iUser);
+				if (ueObjs(iUser).Tx.PUSCH.Active)
 					obj.UeData(localIndex).EqSubframe = lteEqualizeMMSE(obj.UeData(localIndex).Subframe,...
 						obj.UeData(localIndex).EstChannelGrid, obj.UeData(localIndex).NoiseEst);
 				end
@@ -88,18 +89,19 @@ classdef enbReceiverModule
 		function obj = estimatePucch(obj, enbObj, ueObjs, timeNow)
 			for iUser = 1:length(ueObjs)
 				localIndex = find([obj.UeData.UeId] == ueObjs(iUser).NCellID);
-				ue = cast2Struct(ueObjs(iUser));
+				ue = struct(ueObjs(iUser));
+				ueObj = ueObjs(iUser);
 				
-				switch ue.Tx.PUCCH.Format
+				switch ueObj.Tx.PUCCH.Format
 					case 1
-						obj.UeData(localIndex).PUCCH = ltePUCCH1Decode(ue, ue.Tx.PUCCH, 0, ...
-							obj.UeData(localIndex).Subframe(ue.Tx.PUCCH.Indices));
+						obj.UeData(localIndex).PUCCH = ltePUCCH1Decode(ue, ueObj.Tx.PUCCH, 0, ...
+							obj.UeData(localIndex).Subframe(ueObj.Tx.PUCCH.Indices));
 					case 2
-						obj.UeData(localIndex).PUCCH = ltePUCCH2Decode(ue, ue.Tx.PUCCH, ...
-							obj.UeData(localIndex).Subframe(ue.Tx.PUCCH.Indices));
+						obj.UeData(localIndex).PUCCH = ltePUCCH2Decode(ue, ueObj.Tx.PUCCH, ...
+							obj.UeData(localIndex).Subframe(ueObj.Tx.PUCCH.Indices));
 					case 3
-						obj.UeData(localIndex).PUCCH = ltePUCCH3Decode(ue, ue.Tx.PUCCH, ...
-							obj.UeData(localIndex).Subframe(ue.Tx.PUCCH.Indices));
+						obj.UeData(localIndex).PUCCH = ltePUCCH3Decode(ue, ueObj.Tx.PUCCH, ...
+							obj.UeData(localIndex).Subframe(ueObj.Tx.PUCCH.Indices));
 				end
 				
 				% Estimate soft bits to hard bits
@@ -119,7 +121,8 @@ classdef enbReceiverModule
 			for iUser = 1:length(ueObjs)
 				localIndex = find([obj.UeData.UeId] == ueObjs(iUser).NCellID);
 				ue = cast2Struct(ueObjs(iUser));
-				if (ue.Tx.PUSCH.Active)
+				ueObj = ueObjs(iUser);
+				if (ueObj.Tx.PUSCH.Active)
 					
 				end
 			end

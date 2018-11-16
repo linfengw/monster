@@ -1,4 +1,4 @@
-classdef ueTransmitterModule
+classdef ueTransmitterModule < handle
 	properties
 		PRACH;
 		PRACHInfo;

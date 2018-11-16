@@ -45,17 +45,12 @@ classdef ChBulk_v2 < SonohiChannel
 				end
 			end
 			
-			if isempty(obj.DownlinkModel) && strcmp(chtype,'downlink')
-				sonohilog('Hey, no downlink channel is defined.','ERR')
-			end
-			
-			if isempty(obj.UplinkModel) && strcmp(chtype,'uplink')
-				sonohilog('Hey, no uplink channel is defined.','ERR')
+			if isempty(obj.Model)
+				sonohilog('Hey, no channel model is defined.','ERR')
 			end
 			
 			
-			[stations,users] = obj.getAssociated(Stations,Users);
-			
+			[stations,users] = obj.getAssociated(Stations,Users);		
 			
 			if ~isempty(stations)
 				[stations,users,obj] = obj.runModel(stations,users, chtype);
@@ -93,7 +88,7 @@ classdef ChBulk_v2 < SonohiChannel
 				end
 			end
 			[stations, users] = obj.getAssociated(Stations, Users);
-			obj.UplinkModel.CompoundWaveform = compoundWaveform;
+			obj.CompoundWaveform = compoundWaveform;
 		end
 		
 		

@@ -43,7 +43,8 @@ while true
 		channel.Seed = randi([0,9999]);
 		
     % Compute impairments
-    try
+    %
+		try
 				[~, sampleUser] = channel.traverse(station,sampleUser,'downlink');
     catch ME
         sonohilog(sprintf('Channel error, %s',ME.message),'WRN')

@@ -18,25 +18,25 @@ classdef SonohiChannel < handle
 	% :Param.LOSMethod: (str) `'fresnel'` or `'3GPP38901-probability'`, See :meth:`ch.SonohiChannel.isLinkLOS` for more info.
 	% :Param.buildings: (optional) Needed for `'fresnel'` LOSMethod, Structure containing footprints of buildings, given by (x0, y0, x1, y1) coordinates.
 	properties
-		ULMode;
-		DLMode;
+		Mode; % 3GPP, B2B, etc.
 		Region;
-		DownlinkModel;
-		UplinkModel;
+		Model;
 		fieldType; % replace this?
 		Seed;
 		iRound;
+		DLChannelConditions; % Cell matrix N x M where N are the number of stations and M are the number of users
+		ULChannelConditions; 
 		enableFading;
 		enableInterference;
 		enableShadowing;
 		LOSMethod;
-		BuildingFootprints % Matrix containing footprints of buildings
+		BuildingFootprints; % Matrix containing footprints of buildings
+		CompoundWaveform;
 	end
 	
 	methods
 		function obj = SonohiChannel(Stations, Users, Param)
-			obj.DLMode = Param.channel.modeDL;
-			obj.ULMode = Param.channel.modeUL;
+			obj.Mode = Param.channel.mode;
 			obj.Region = Param.channel.region;
 			obj.LOSMethod = Param.channel.LOSMethod;
 			obj.Seed = Param.seed;
@@ -46,17 +46,26 @@ classdef SonohiChannel < handle
 			obj.BuildingFootprints = Param.buildings;
 			obj.iRound = 0;
 			
-			% Get class for chosen model for downlink
-			obj.DownlinkModel = obj.findChannelClass('downlink');
-			obj.UplinkModel = obj.findChannelClass('uplink');
+			% Construct cells for storing channel conditions
+			obj.DLChannelConditions = cell(Param.numEnodeBs, Param.numUsers, Param.schRounds);
+			obj.ULChannelConditions = cell(Param.numEnodeBs, Param.numUsers);
 			
-			obj.DownlinkModel.setup(Stations, Users, Param);
+			obj.Model = obj.findChannelClass();
+			obj.Model.setup(Stations, Users, Param);
 
 			if obj.enableShadowing
-				obj.DownlinkModel.setupShadowing(Stations)
+				obj.Model.setupShadowing(Stations)
 			end
 
 			
+		end
+
+		function obj = storeDLChannelCondition(obj, Station, User, condition, value)
+			idx = [Station.NCellID, User.NCellID, obj.iRound+1];
+			if isempty(obj.DLChannelConditions{idx(1), idx(2), idx(3)})
+				obj.DLChannelConditions{idx(1), idx(2), idx(3)} = struct();
+			end
+			obj.DLChannelConditions{idx(1), idx(2), idx(3)}.(condition) = value;
 		end
 		
 	end
@@ -106,35 +115,17 @@ classdef SonohiChannel < handle
 			end
 		end
 		
-		
-		function chModel = findChannelClass(obj,chtype)
-			% Setup association to traverse
-			switch chtype
-				case 'downlink'
-					mode = obj.DLMode;
-				case 'uplink'
-					mode = obj.ULMode;
-			end
-			
-			if strcmp(mode,'eHATA')
-				chModel = sonohieHATA(obj, chtype);
-			elseif strcmp(mode,'ITU1546')
-				chModel = sonohiITU(obj, chtype);
-			elseif strcmp(mode, 'B2B')
-				chModel = sonohiB2B(obj, chtype);
-			elseif strcmp(mode, '3GPP38901')
-				chModel = sonohi3GPP38901(obj, chtype);
-			elseif strcmp(mode, 'winner')
-				chModel = sonohiWINNERv2(obj, chtype);
-			elseif strcmp(mode, 'Quadriga')
-				chModel = sonohiQuadriga(obj, chtype);
-			else
-				sonohilog(sprintf('Channel mode: %s not supported. Choose [eHATA, ITU1546, winner]',mode),'ERR')
-			end
-			
-			
-			
+	 function chModel = findChannelClass(obj)
+		 switch obj.Mode
+			 case 'B2B'
+				 chModel = sonohiB2B(obj);
+			 case '3GPP38901'
+				 chModel = sonohi3GPP38901(obj);
+			 otherwise
+				 sonohilog(sprintf('Channel mode: %s not supported. Choose [eHATA, ITU1546, winner]',mode),'ERR')
+		 end
 		end
+		
 		
 		function area = getAreaSize(obj)
 			extraSamples = 5000; % Extra samples for allowing interpolation. Error will be thrown in this is exceeded.
@@ -151,9 +142,9 @@ classdef SonohiChannel < handle
 			
 			switch chtype
 				case 'downlink'
-					[~, users] = obj.DownlinkModel.run(stations,users,'channel',obj);
+					[~, users] = obj.Model.run(stations,users, chtype,'channel',obj);
 				case 'uplink'
-					[stations, ~] = obj.UplinkModel.run(stations,users,'channel',obj);
+					[stations, ~] = obj.Model.run(stations,users, chtype,'channel',obj);
 			end
 			
 			if strcmp(obj.fieldType,'full')

@@ -5,7 +5,7 @@ Param.rmResults = 0;% Boolean to clean the results folder
 Param.logToFile = 0; % Boolean, if true all logs are re-directed to a file in /logs
 
 % Boolean used to enable the drawing of plots and other cool stuff
-Param.draw = 1;
+Param.draw = 0;
 
 % Booelan used to store the transmission data, that is each TB, codeword, waveform
 Param.storeTxData = 0;
@@ -78,8 +78,7 @@ Param.eNBGain = 0; %Antenna gain of the eNB.
 Param.prbRe = 168;% Integer used for the number of RE in a RB
 Param.PRACHInterval = 10; %Given as the number of subframes between each PRACH.
 %% Channel configuration
-Param.channel.modeDL = 'ITU1546';% String to control the channel mode in DL ['winner', 'eHATA', 'ITU1546', '3GPP38901']
-Param.channel.modeUL = 'B2B';% String to control the channel mode in UL
+Param.channel.mode = '3GPP38901';% String to control the channel mode in DL ['winner', 'eHATA', 'ITU1546', '3GPP38901']
 Param.channel.region = 'Urban';% String to control the channel region
 Param.channel.enableFading = true;
 Param.channel.enableInterference = false;
@@ -87,12 +86,7 @@ Param.channel.enableShadowing = true; % Only capable for 3GPP38901
 Param.channel.computeCoverage = false; %Only a visualization feature. Force the recomputation of the coverage, otherwise loaded from file if stored.
 Param.channel.LOSMethod = '3GPP38901-probability'; % ['fresnel', '3GPP38901-probability']
 % WINNER CONFIGURATION, only if 'winner is used'. See docs for the different varieties.
-if strcmp(Param.channel.modeDL,'winner')
-  Param.channel.region = struct();
-	Param.channel.region.macroScenario = '11';
-	Param.channel.region.microScenario = '3';
-	Param.channel.region.picoScenario = '3';
-elseif strcmp(Param.channel.modeDL, '3GPP38901')
+if strcmp(Param.channel.mode, '3GPP38901')
 	Param.channel.region = struct();
 	Param.channel.region.macroScenario = 'UMa';
 	Param.channel.region.microScenario = 'UMi';

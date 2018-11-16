@@ -18,11 +18,10 @@ classdef sonohi3GPP38901 < sonohiBase
 	
 	methods
 		
-		function obj = sonohi3GPP38901(Channel, Chtype)
+		function obj = sonohi3GPP38901(Channel)
 			% Inherits :class:`ch.SONOHImodels.sonohiBase`
-			obj = obj@sonohiBase(Channel, Chtype);
-			
-        end
+			obj = obj@sonohiBase(Channel);	
+    end
         
 		function setupShadowing(obj, Stations)
 			% For each base station, construct a shadow map. This is done using '`interpolation`' method as described in [#chmodelbook]_.
@@ -150,7 +149,7 @@ classdef sonohi3GPP38901 < sonohiBase
         
         
 		
-		function [lossdB, varargout] = computePathLoss(obj, TxNode, RxNode)
+		function [lossdB] = computePathLoss(obj, TxNode, RxNode)
 			% Computes path loss. uses the following parameters
 			%
 			% ..todo:: Compute indoor depth from mobility class
@@ -211,20 +210,18 @@ classdef sonohi3GPP38901 < sonohiBase
 			            
 			% Return of channel conditions if required.
 			% TODO: For atomic reasonability, consider moving this to class properties instead. 
-			RxNode.Rx.ChannelConditions.lossdB = lossdB;
-			RxNode.Rx.ChannelConditions.LOS = LOS;
-			RxNode.Rx.ChannelConditions.LOSprop = prop;
-			RxNode.Rx.ChannelConditions.AreaType = areatype;
-
+			obj.Channel.storeDLChannelCondition(TxNode, RxNode, 'baseloss', lossdB);
+			obj.Channel.storeDLChannelCondition(TxNode, RxNode, 'LOS', LOS);
+			obj.Channel.storeDLChannelCondition(TxNode, RxNode, 'LOSprop', prop);
+			
 			if shadowing
 				XCorr = obj.computeShadowingLoss(TxNode.NCellID, RxNode.Position, LOS);
-				RxNode.Rx.ChannelConditions.LSP = XCorr; % Only large scale parameters at the moment is shadowing.
+				obj.Channel.storeDLChannelCondition(TxNode, RxNode, 'LSP', XCorr); % Only large scale parameters at the moment is shadowing.
 				lossdB = lossdB + XCorr;
 			end
 
-			RxNode.Rx.ChannelConditions.pathloss = lossdB;
+			obj.Channel.storeDLChannelCondition(TxNode, RxNode, 'pathloss', lossdB);
 
-			varargout{1} = RxNode;
 		end
 		
 	end
