@@ -45,6 +45,7 @@ classdef sonohi3GPP38901 < sonohiBase
 			end
 		end
 		function RxNode = addFading(obj, TxNode, RxNode, mode)
+			% TODO: Add possibility to change the fading model used from parameters.
 			fadingmodel = 'tdl';
 
 			switch mode
@@ -61,7 +62,6 @@ classdef sonohi3GPP38901 < sonohiBase
 
 			switch fadingmodel
 				case 'cdl'
-
 					cdl = nrCDLChannel;
 					cdl.DelayProfile = 'CDL-A';
 					cdl.DelaySpread = 300e-9;
