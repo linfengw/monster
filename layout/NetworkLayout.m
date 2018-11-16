@@ -197,11 +197,13 @@ classdef NetworkLayout < handle
             obj.NumPico = length(obj.PicoCoordinates(:,1));
             obj.generatePicoCells(Param);
             Param.numEnodeBs=obj.NumMacro + obj.NumMicro + obj.NumPico;
+            Param.numMicro = obj.NumMicro;
+            Param.numPico  = obj.NumPico;
             obj.Param = Param;
             
         end
 
-        function draweNBs(obj, Param)
+        function draweNBs(obj, Param, plotControl)
             % This method uses the previously calculated coordinates of all 3 kinds of cells (macro, micro, pico) and draws them on top of the building grid in the figure made from the createLayoutPlot function.
             % 
             % :input Param: Parameter struct containing the following:
@@ -214,92 +216,102 @@ classdef NetworkLayout < handle
             area = [min(buildings(:, 1)), min(buildings(:, 2)), max(buildings(:, 3)), ...
                 max(buildings(:, 4))];
 
-            % Draw grid first
-
-            for i = 1:length(buildings(:,1))
-                x0 = buildings(i,1);
-                y0 = buildings(i,2);
-                x = buildings(i,3)-x0;
-                y = buildings(i,4)-y0;
-                rectangle(Param.LayoutAxes,'Position',[x0 y0 x y],'FaceColor',[0.9 .9 .9 0.4],'EdgeColor',[1 1 1 0.6])
-            end
-
-            %Draw macros
-            for i=1:obj.NumMacro
-                xc = obj.MacroCells{i}.Center(1);
-                yc = obj.MacroCells{i}.Center(2);
-                text(Param.LayoutAxes,xc,yc-20,strcat('Macro BS ', num2str(obj.MacroCells{i}.CellID), ' (',num2str(round(xc)),', ',num2str(round(yc)),')'),'HorizontalAlignment','center');
-                [macroImg, ~, alpha] = imread('utils/images/macro.png');
-                % For some magical reason the image is rotated 180 degrees.
-                macroImg = imrotate(macroImg,180);
-                alpha = imrotate(alpha,180);
-                % Scale size of figure
-                scale = 30;
-                macroLengthY = length(macroImg(:,1,1))/scale;
-                macroLengthX = length(macroImg(1,:,1))/scale;
-                % Position and set alpha from png image
-                f = imagesc(Param.LayoutAxes,[xc-macroLengthX xc+macroLengthX],[yc-macroLengthY yc+macroLengthY],macroImg);
-                set(f, 'AlphaData', alpha);
-                %Draw 3 sectors as hexagons (flat top and bottom)		
-                theta = pi/3;
-                xyHex = zeros(7,2);
-                for i=1:3 
-                    cHex = [(xc + obj.MacroCells{1}.CellRadius * cos((i-1)*2*theta)) ...
-                            (yc + obj.MacroCells{1}.CellRadius * sin((i-1)*2*theta))];
-                    for j=1:7
-                        xyHex(j,1) = cHex(1) + obj.MacroCells{1}.CellRadius*cos(j*theta);
-                        xyHex(j,2) = cHex(2) + obj.MacroCells{1}.CellRadius*sin(j*theta);
+            for iFigure=1: length(Param.LayoutAxes)
+                % Draw grid first
+                if plotControl(iFigure, 4) == 1
+                    for i = 1:length(buildings(:,1))
+                        x0 = buildings(i,1);
+                        y0 = buildings(i,2);
+                        x = buildings(i,3)-x0;
+                        y = buildings(i,4)-y0;
+                        rectangle(Param.LayoutAxes(iFigure),'Position',[x0 y0 x y],'FaceColor',[0.9 .9 .9 0.4],'EdgeColor',[1 1 1 0.6])
                     end
-
-                    l = line(Param.LayoutAxes,xyHex(:,1),xyHex(:,2), 'Color', 'k');
-                    set(get(get(l,'Annotation'),'LegendInformation'),'IconDisplayStyle','off')
-
                 end
-            end
+                %Draw macros
+                for i=1:obj.NumMacro
+                    xc = obj.MacroCells{i}.Center(1);
+                    yc = obj.MacroCells{i}.Center(2);
+                    if plotControl(iFigure,1) == 1;
+                        text(Param.LayoutAxes(iFigure),xc,yc-20,strcat('Macro BS ', num2str(obj.MacroCells{i}.CellID), ' (',num2str(round(xc)),', ',num2str(round(yc)),')'),'HorizontalAlignment','center');
+                        [macroImg, ~, alpha] = imread('utils/images/macro.png');
+                        % For some magical reason the image is rotated 180 degrees.
+                        macroImg = imrotate(macroImg,180);
+                        alpha = imrotate(alpha,180);
+                        % Scale size of figure
+                        scale = 30;
+                        macroLengthY = length(macroImg(:,1,1))/scale;
+                        macroLengthX = length(macroImg(1,:,1))/scale;
+                        % Position and set alpha from png image
+                        f = imagesc(Param.LayoutAxes(iFigure),[xc-macroLengthX xc+macroLengthX],[yc-macroLengthY yc+macroLengthY],macroImg);
+                        set(f, 'AlphaData', alpha);
+                    end
+                    %Draw 3 sectors as hexagons (flat top and bottom)
+                    if plotControl(iFigure, 4) == 1		
+                        theta = pi/3;
+                        xyHex = zeros(7,2);
+                        for i=1:3 
+                            cHex = [(xc + obj.MacroCells{1}.CellRadius * cos((i-1)*2*theta)) ...
+                                    (yc + obj.MacroCells{1}.CellRadius * sin((i-1)*2*theta))];
+                            for j=1:7
+                                xyHex(j,1) = cHex(1) + obj.MacroCells{1}.CellRadius*cos(j*theta);
+                                xyHex(j,2) = cHex(2) + obj.MacroCells{1}.CellRadius*sin(j*theta);
+                            end
 
-            %Draw Micros
-            [microImg, ~, alpha] = imread('utils/images/micro.png');
-            % For some magical reason the image is rotated 180 degrees.
-            microImg = imrotate(microImg,180);
-            alpha = imrotate(alpha,180);
-            % Scale size of figure
-            scale = 30;
-            microLengthY = length(microImg(:,1,1))/scale;
-            microLengthX = length(microImg(1,:,1))/scale;
+                            l = line(Param.LayoutAxes(iFigure),xyHex(:,1),xyHex(:,2), 'Color', 'k');
+                            set(get(get(l,'Annotation'),'LegendInformation'),'IconDisplayStyle','off')
 
-            for i=1:obj.NumMicro
+                        end
+                    end
+                end
 
-                xr = obj.MicroCoordinates(i,1);
-                yr = obj.MicroCoordinates(i,2);
+                %Draw Micros
+                if plotControl(iFigure,2) == 1;
+                    [microImg, ~, alpha] = imread('utils/images/micro.png');
+                    % For some magical reason the image is rotated 180 degrees.
+                    microImg = imrotate(microImg,180);
+                    alpha = imrotate(alpha,180);
+                    % Scale size of figure
+                    scale = 30;
+                    microLengthY = length(microImg(:,1,1))/scale;
+                    microLengthX = length(microImg(1,:,1))/scale;
 
-                f = imagesc(Param.LayoutAxes,[xr-microLengthX xr+microLengthX],[yr-microLengthY yr+microLengthY],microImg);
-                set(f, 'AlphaData', alpha);
-                
-                text(xr,yr+20,strcat('Micro BS ', num2str(obj.MicroCells{i}.CellID),' (',num2str(round(xr)),', ', ...
-                    num2str(round(yr)),')'),'HorizontalAlignment','center','FontSize',9);
-            end
+                    for i=1:obj.NumMicro
 
-            %Draw Picos
-            [picoImg, ~, alpha] = imread('utils/images/pico.png');
-            % For some magical reason the image is rotated 180 degrees.
-            picoImg = imrotate(picoImg,180);
-            alpha = imrotate(alpha,180);
-            % Scale size of figure
-            scale = 30;
-            picoLengthY = length(picoImg(:,1,1))/scale;
-            picoLengthX = length(picoImg(1,:,1))/scale;
+                        xr = obj.MicroCoordinates(i,1);
+                        yr = obj.MicroCoordinates(i,2);
 
-            for i=1:obj.NumPico
-                x = obj.PicoCoordinates(i,1);
-                y = obj.PicoCoordinates(i,2);
-                text(x,y+20,strcat('Pico BS ', num2str(obj.PicoCells{i}.CellID),' (',num2str(round(x)),', ', ...
-                    num2str(round(y)),')'),'HorizontalAlignment','center','FontSize',9);
+                        f = imagesc(Param.LayoutAxes(iFigure),[xr-microLengthX xr+microLengthX],[yr-microLengthY yr+microLengthY],microImg);
+                        set(f, 'AlphaData', alpha);
                         
-                f = imagesc(Param.LayoutAxes,[x-picoLengthX x+picoLengthX],[y-picoLengthY y+picoLengthY],picoImg);
-                set(f, 'AlphaData', alpha);
-                drawnow
+                        text(Param.LayoutAxes(iFigure),xr,yr+20,strcat('Micro BS ', num2str(obj.MicroCells{i}.CellID),' (',num2str(round(xr)),', ', ...
+                            num2str(round(yr)),')'),'HorizontalAlignment','center','FontSize',9);
+                    end
+                end
+
+                %Draw Picos
+                if plotControl(iFigure,3) == 1;
+                    [picoImg, ~, alpha] = imread('utils/images/pico.png');
+                    % For some magical reason the image is rotated 180 degrees.
+                    picoImg = imrotate(picoImg,180);
+                    alpha = imrotate(alpha,180);
+                    % Scale size of figure
+                    scale = 30;
+                    picoLengthY = length(picoImg(:,1,1))/scale;
+                    picoLengthX = length(picoImg(1,:,1))/scale;
+
+                    for i=1:obj.NumPico
+                        x = obj.PicoCoordinates(i,1);
+                        y = obj.PicoCoordinates(i,2);
+                        text(Param.LayoutAxes(iFigure),x,y+20,strcat('Pico BS ', num2str(obj.PicoCells{i}.CellID),' (',num2str(round(x)),', ', ...
+                            num2str(round(y)),')'),'HorizontalAlignment','center','FontSize',9);
+                                
+                        f = imagesc(Param.LayoutAxes(iFigure),[x-picoLengthX x+picoLengthX],[y-picoLengthY y+picoLengthY],picoImg);
+                        set(f, 'AlphaData', alpha);
+                        drawnow
+                        
                 
-        
+                    end
+                end
             end
         end
     end

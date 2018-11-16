@@ -147,7 +147,7 @@ classdef ChBulk_v2 < SonohiChannel
 			
 			
 			%% Plot of maximum received power at given coordinates. 
-			colors = {'r','b','g','y','c','k'};
+			colors = colormap(hsv(numStations));
 			
 			h = cell(numStations,1);
 			% figure
@@ -184,7 +184,7 @@ classdef ChBulk_v2 < SonohiChannel
 			hold on
 			for iStation = 1:numStations
 				legends{iStation} = sprintf('Station %i', iStation);
-				surf(figureHandle,lengthXY(1,:),lengthXY(2,:),stationcoverage(:,:,iStation),'FaceColor',colors{iStation},'FaceAlpha',0.5,'EdgeColor','none')
+				surf(figureHandle,lengthXY(1,:),lengthXY(2,:),stationcoverage(:,:,iStation),'FaceColor',colors(iStation,:),'FaceAlpha',0.5,'EdgeColor','none')
 			end
 			%title(sprintf('Received power > %i dBm for all stations',RxPwThreshold))
 			legend(legends{:})

@@ -2,6 +2,7 @@ clear all
 close all
 initParam
 load('SimulationParameters.mat');
+Param.posScheme = 'none';
 Param.numMacro = 1;
 Param.numMicro = 0;
 Param.numPico = 0;
@@ -32,16 +33,16 @@ User = createUsers(Param);
 
 
 
-StationS1 = Station;
-StationS1.Tx.AntennaArray.Bearing = 30;
-StationS2 = Station;
-StationS2.Tx.AntennaArray.Bearing = 150;
+%StationS1 = Station;
+% StationS1.Tx.AntennaArray.Bearing = 30;
+% StationS2 = Station;
+% StationS2.Tx.AntennaArray.Bearing = 150;
 StationS3 = Station;
-StationS3.Tx.AntennaArray.Bearing = 270;
+% StationS3.Tx.AntennaArray.Bearing = 270;
 
 % Create Channel scenario
 ChannelUMa = ChBulk_v2(Station, User, Param);
-ChannelUMa.plotHeatmap([StationS1, StationS2, StationS3], User);
+ChannelUMa.plotHeatmap([StationS3], User, Param.LayoutAxes(7));
 
 
 Param.channel.region.macroScenario = 'RMa';
@@ -167,86 +168,82 @@ title('UMa \mu received power, 1.84 GHz')
 xlabel('X [m]')
 ylabel('Y [m]')
 %%
-figure
-heatmap(UMaResultsRxPw)
-set(gca,'YDir','reverse')
-colormap hot
-
-figure
-contourf(lengthXY(1,:), lengthXY(2,:), UMaResultsPL)
-caxis([70 150])
-c = colorbar;
-c.Label.String = 'loss [dB]';
-c.Label.FontSize = 12;
-colormap jet
-title('UMa \mu pathloss, 1.84 GHz')
-xlabel('X [m]')
-ylabel('Y [m]')
-
-
-
-figure
-contourf(lengthXY(1,:), lengthXY(2,:), RMaResultsPL)
-caxis([70 150])
-c = colorbar;
-c.Label.String = 'loss [dB]';
-c.Label.FontSize = 12;
-colormap jet
-title('RMa \mu pathloss, 1.84 GHz')
-xlabel('X [m]')
-ylabel('Y [m]')
-
-
-
-
-figure
-contourf(lengthXY(1,:), lengthXY(2,:), UMaResultsLOS,1)
-title('LOS state for UMa')
-
-figure
-contourf(lengthXY(1,:), lengthXY(2,:), RMaResultsLOS,1)
-title('LOS state for RMa')
-colormap summer
-
-if Param.channel.enableShadowing
-	
-	
-figure
-contourf(lengthXY(1,:), lengthXY(2,:), UMaResultsLSP)
-colorbar
-colormap jet
-end
-
-figure
-contourf(lengthXY(1,:), lengthXY(2,:), UMaResultsLOSprop)
-colorbar
-colormap jet
-title('RMa \mu pathloss, 1.84 GHz')
-xlabel('X [m]')
-ylabel('Y [m]')
-
-
-
-
-figure
-contourf(lengthXY(1,:), lengthXY(2,:), UMaResultsLOS,1)
-title('LOS state for UMa')
-
-figure
-contourf(lengthXY(1,:), lengthXY(2,:), RMaResultsLOS,1)
-title('LOS state for RMa')
-colormap summer
-
-if Param.channel.enableShadowing
-	
-	
-	figure
-	contourf(lengthXY(1,:), lengthXY(2,:), UMaResultsLSP)
-	colorbar
-	colormap jet
-end
-
-figure
-contourf(lengthXY(1,:), lengthXY(2,:), UMaResultsLOSprop)
-colorbar
-colormap jet
+% 
+% figure
+% contourf(lengthXY(1,:), lengthXY(2,:), UMaResultsPL)
+% caxis([70 150])
+% c = colorbar;
+% c.Label.String = 'loss [dB]';
+% c.Label.FontSize = 12;
+% colormap jet
+% title('UMa \mu pathloss, 1.84 GHz')
+% xlabel('X [m]')
+% ylabel('Y [m]')
+% 
+% 
+% 
+% figure
+% contourf(lengthXY(1,:), lengthXY(2,:), RMaResultsPL)
+% caxis([70 150])
+% c = colorbar;
+% c.Label.String = 'loss [dB]';
+% c.Label.FontSize = 12;
+% colormap jet
+% title('RMa \mu pathloss, 1.84 GHz')
+% xlabel('X [m]')
+% ylabel('Y [m]')
+% 
+% 
+% 
+% 
+% figure
+% contourf(lengthXY(1,:), lengthXY(2,:), UMaResultsLOS,1)
+% title('LOS state for UMa')
+% 
+% figure
+% contourf(lengthXY(1,:), lengthXY(2,:), RMaResultsLOS,1)
+% title('LOS state for RMa')
+% colormap summer
+% 
+% if Param.channel.enableShadowing
+% 	
+% 	
+% figure
+% contourf(lengthXY(1,:), lengthXY(2,:), UMaResultsLSP)
+% colorbar
+% colormap jet
+% end
+% 
+% figure
+% contourf(lengthXY(1,:), lengthXY(2,:), UMaResultsLOSprop)
+% colorbar
+% colormap jet
+% title('RMa \mu pathloss, 1.84 GHz')
+% xlabel('X [m]')
+% ylabel('Y [m]')
+% 
+% 
+% 
+% 
+% figure
+% contourf(lengthXY(1,:), lengthXY(2,:), UMaResultsLOS,1)
+% title('LOS state for UMa')
+% 
+% figure
+% contourf(lengthXY(1,:), lengthXY(2,:), RMaResultsLOS,1)
+% title('LOS state for RMa')
+% colormap summer
+% 
+% if Param.channel.enableShadowing
+% 	
+% 	
+% 	figure
+% 	contourf(lengthXY(1,:), lengthXY(2,:), UMaResultsLSP)
+% 	colorbar
+% 	colormap jet
+% end
+% 
+% figure
+% contourf(lengthXY(1,:), lengthXY(2,:), UMaResultsLOSprop)
+% colorbar
+% colormap jet
