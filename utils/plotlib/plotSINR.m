@@ -1,7 +1,6 @@
-%Plot function to plot SNR
-function plotSNR(Param, StationsIn)
-
-    Stations = StationsIn; 
+%Plot SINR for the use case
+function plotSINR(Param, StationsIn)
+    Stations = StationsIn;
     %generate dummy user
     User = UserEquipment(Param, 99);
 
@@ -14,7 +13,7 @@ function plotSNR(Param, StationsIn)
     Param.channel.region.macroScenario = 'UMa';
 	Param.channel.region.microScenario = 'UMi';
 	Param.channel.region.picoScenario = 'UMi';
-
+    Param.channel.enableInterference = true;
     %Is this needed?
     setpref('sonohiLog','logLevel', 4);
 
@@ -26,9 +25,9 @@ function plotSNR(Param, StationsIn)
     %Think about dimension of the factor
     resultsUMa = cell(length(Stations),N,N);
     UMaResultsRxPw = nan(N,N,length(Stations));
-
+    ChannelUMa = ChBulk_v2(Stations, User, Param);
     for iStation=1:length(Stations)
-        ChannelUMa = ChBulk_v2(Stations(iStation), User, Param);
+        
 
         Stations(iStation).Users = struct('UeId', User.NCellID, 'CQI', -1, 'RSSI', -1);
         Stations(iStation).ScheduleDL(1,1).UeId = User.NCellID;
@@ -51,12 +50,12 @@ function plotSNR(Param, StationsIn)
                 % Traverse channel
                 try
 
-                    [~, ueUMaS] = ChannelUMa.traverse(Stations(iStation),ue,'downlink');
+                    [~, ueUMaS] = ChannelUMa.traverse(Stations,ue,'downlink');
                 catch ME
                     
                 end
                     resultsUMa{iStation,Xpos,Ypos} = ueUMaS.Rx.ChannelConditions;
-                    resultsUMa{iStation,Xpos,Ypos}.RxPw = ueUMaS.Rx.RxPwdBm;
+                    resultsUMa{iStation,Xpos,Ypos}.SINRdB = ueUMaS.Rx.SINRdB;
                 counter = counter +1;
                 
             end
@@ -68,7 +67,7 @@ function plotSNR(Param, StationsIn)
             
             for Ypos = 1:length(lengthXY(2,:))
 
-                UMaResultsRxPw(Xpos,Ypos,iStation) = resultsUMa{iStation,Xpos,Ypos}.RxPw;
+                UMaResultsRxPw(Xpos,Ypos,iStation) = resultsUMa{iStation,Xpos,Ypos}.SINRdB;
 
             end
         end
@@ -80,8 +79,8 @@ function plotSNR(Param, StationsIn)
     %split UMaResults by bst type and plot
     %plot for macro
     if Param.numMacro > 0
-        contourf(Param.LayoutAxes(7),lengthXY(1,:), lengthXY(2,:), max(UMaResultsRxPw(:,:,1:Param.numMacro),[],3), 10)
-        c = colorbar(Param.LayoutAxes(7));
+        contourf(Param.LayoutAxes(10),lengthXY(1,:), lengthXY(2,:), min(UMaResultsRxPw(:,:,1:Param.numMacro),[],3), 10)
+        c = colorbar(Param.LayoutAxes(10));
         c.Label.String = 'Receiver Power [dBm]';
         c.Label.FontSize = 12;
         colormap(hot)
@@ -89,8 +88,8 @@ function plotSNR(Param, StationsIn)
 
     %plot for micro
     if Param.numMicro > 0
-        contourf(Param.LayoutAxes(8),lengthXY(1,:), lengthXY(2,:), max(UMaResultsRxPw(:,:,Param.numMacro+1:Param.numMacro+Param.numMicro),[],3), 10)
-        c = colorbar(Param.LayoutAxes(8));
+        contourf(Param.LayoutAxes(11),lengthXY(1,:), lengthXY(2,:), min(UMaResultsRxPw(:,:,Param.numMacro+1:Param.numMacro+Param.numMicro),[],3), 10)
+        c = colorbar(Param.LayoutAxes(11));
         c.Label.String = 'Receiver Power [dBm]';
         c.Label.FontSize = 12;
         colormap(hot)
@@ -98,11 +97,12 @@ function plotSNR(Param, StationsIn)
 
     %plot for micro
     if Param.numPico > 0
-        contourf(Param.LayoutAxes(9),lengthXY(1,:), lengthXY(2,:),... 
-                max(UMaResultsRxPw(:,:,Param.numMacro+Param.numMicro+1:Param.numMacro+Param.numMicro+Param.numPico),[],3), 10)
-        c = colorbar(Param.LayoutAxes(9));
+        contourf(Param.LayoutAxes(12),lengthXY(1,:), lengthXY(2,:),... 
+                min(UMaResultsRxPw(:,:,Param.numMacro+Param.numMicro+1:Param.numMacro+Param.numMicro+Param.numPico),[],3), 10)
+        c = colorbar(Param.LayoutAxes(12));
         c.Label.String = 'Receiver Power [dBm]';
         c.Label.FontSize = 12;
         colormap(hot)
     end
+
 end

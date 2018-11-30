@@ -41,7 +41,9 @@ function [Stations, Param] = createBaseStations (Param)
 			Stations(iStation) = setNeighbours(Stations(iStation), Stations, Param);
 		end
 
-		plotSNR(Param, Stations);
+		%plotSNR(Param, Stations);
+
+		plotSINR(Param, Stations);
 
 		%Draw the base stations on the corresponding plots
 		plotControl = ones(length(Param.LayoutAxes),4);

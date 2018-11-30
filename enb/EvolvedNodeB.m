@@ -65,7 +65,7 @@ classdef EvolvedNodeB
 					obj.Psleep = 75; % W
 				case 'micro'
 					obj.NDLRB = Param.numSubFramesMicro;
-					obj.Pmax = 6.3; % W
+					obj.Pmax = 1; % W originally 6.3
 					obj.P0 = 56; % W
 					obj.DeltaP = 2.6;
 					obj.Psleep = 39.0; % W

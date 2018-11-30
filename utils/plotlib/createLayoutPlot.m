@@ -119,6 +119,39 @@ set(layout_axes,'YTickLabel',[]);
 set(layout_axes,'Box','on');
 hold(layout_axes,'on');
 
+%%SINR
+SINRMacroTab = uitab(tabgp, 'Title', 'SINR Macro Layer');
+layout_axes = axes('parent', SINRMacroTab);
+set(layout_axes,'XLim',[xc-maxRadius-10,xc+maxRadius+10],'YLim',[yc-maxRadius-10,yc+maxRadius+10]); %+/-10 for better looks
+set(layout_axes,'XTick',[]);
+set(layout_axes,'XTickLabel',[]);
+set(layout_axes,'YTick',[]);
+set(layout_axes,'YTickLabel',[]);
+set(layout_axes,'Box','on');
+hold(layout_axes,'on');
+
+%%SINR
+SINRMicroTab = uitab(tabgp, 'Title', 'SINR Micro Layer');
+layout_axes = axes('parent', SINRMicroTab);
+set(layout_axes,'XLim',[xc-maxRadius-10,xc+maxRadius+10],'YLim',[yc-maxRadius-10,yc+maxRadius+10]); %+/-10 for better looks
+set(layout_axes,'XTick',[]);
+set(layout_axes,'XTickLabel',[]);
+set(layout_axes,'YTick',[]);
+set(layout_axes,'YTickLabel',[]);
+set(layout_axes,'Box','on');
+hold(layout_axes,'on');
+
+%%SINR
+SINRPicoTab = uitab(tabgp, 'Title', 'SINR Pico Layer');
+layout_axes = axes('parent', SINRPicoTab);
+set(layout_axes,'XLim',[xc-maxRadius-10,xc+maxRadius+10],'YLim',[yc-maxRadius-10,yc+maxRadius+10]); %+/-10 for better looks
+set(layout_axes,'XTick',[]);
+set(layout_axes,'XTickLabel',[]);
+set(layout_axes,'YTick',[]);
+set(layout_axes,'YTickLabel',[]);
+set(layout_axes,'Box','on');
+hold(layout_axes,'on');
+
 %% tab test
 tabTestTab = uitab(tabgp, 'Title', 'Testtab');
 layout_axes = axes('parent', tabTestTab);
