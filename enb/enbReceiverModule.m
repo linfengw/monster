@@ -1,4 +1,4 @@
-classdef enbReceiverModule
+classdef enbReceiverModule < handle
 	properties
 		NoiseFigure;
 		Waveform;
@@ -6,12 +6,14 @@ classdef enbReceiverModule
 		UeData;
 		RxPwdBm;
 		SNR;
+		Waveforms; %Cells containing: waveform(s) from a user, and userID
 	end
 	
 	methods
 		
 		function obj = enbReceiverModule(Param)
 			obj.NoiseFigure = Param.eNBNoiseFigure;
+			obj.Waveforms = cell(Param.numUsers,2);
 		end
 		
 		function obj = set.Waveform(obj,Sig)
@@ -128,10 +130,33 @@ classdef enbReceiverModule
 			end
 		end
 
+		%waveformsIn is array of length n, where n > 1 for MIMO
+		%user is an UserEquipment object
+		function obj = addWaveforms(obj, waveformsIn, user) 
+			%Add info to the cell array
+			obj.Waveforms(user.NCellID,:) =  {waveformsIn, user};
+			%to call the waveforms array, use obj.Waveforms{userID,1}
+			%to call the user equipment field, use obj.Waveforms{userID,2}
+		end
+
+		%Returns a compiled waveform, consisting of all waveforms from all users.
+		function compiledWaveform = compileWaveform(obj)
+			
+			temp =0;
+			for iCell=1:length(obj.Waveforms(:,1))
+				for iWave=1:length(obj.Waveforms{iCell,1})
+					%Add the waveform times Rx power of the ue 
+					temp = temp + obj.Waveforms{iCell,1}(iWave)*obj.Waveforms{iCell,2}.Rx.RxPwdBm; %If RxPwddBm has not been set it all goes wrong
+				end
+			end
+			compiledWaveform = temp; %Return the compiled waveforms
+		end
+
 		function obj = reset(obj)
 			obj.UeData = [];
 			obj.Waveform = [];
 			obj.RxPwdBm = [];
+			obj.Waveforms = {};
 		end
 		
 	end
