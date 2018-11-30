@@ -170,9 +170,9 @@ classdef NetworkLayout < handle
                 case 'Single Cell' % Deploys a single cell with 3 micro BST and randomly placed pico BST in each sector
                     obj.PosScheme = 'Single Cell';
                     Param.macroRadius = 300;
-                    Param.numMacro = 1;
-                    Param.numMicro = 9 * Param.numMacro;
-                    Param.numPico = Param.numPicoPerSector * 3 * Param.numMacro; 
+                    Param.numMacro = 2;
+                    Param.numMicro = 0 * Param.numMacro;
+                    Param.numPico = Param.numPicoPerSector * 0 * Param.numMacro; 
                     Param.macroHeight = 35;
                     Param.microHeight = 10;
                     Param.picoHeight = 5;

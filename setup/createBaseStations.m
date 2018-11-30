@@ -22,26 +22,45 @@ function [Stations, Param] = createBaseStations (Param)
 		%TODO: Replace with new config class
 		Param = networkLayout.Param; %To update parameters to match a chosen scenario
 
+		%eNB indexing - The CellID array now contains the ID of the eNB (row(:,1)) and the corresponding index in all eNB (row(:,2))
+		macroCellID = zeros(networkLayout.NumMacro,2);
+		microCellID = zeros(networkLayout.NumMicro,2);
+		picoCellID  = zeros(networkLayout.NumPico,2);
+		for iCell = 1:length(macroCellID(:,1))
+			macroCellID(iCell,1) = networkLayout.MacroCells{iCell}.CellID;
+			macroCellID(iCell,2) = iCell;
+		end
+
+		for iCell = 1:length(microCellID(:,1))
+			microCellID(iCell,1) = networkLayout.MicroCells{iCell}.CellID;
+			microCellID(iCell,2) = iCell + macroCellID(length(macroCellID(:,1)),2);
+		end
+
+		for iCell = 1:length(picoCellID(:,1))
+			picoCellID(iCell,1) = networkLayout.PicoCells{iCell}.CellID;
+			picoCellID(iCell,2) = iCell + microCellID(length(microCellID(:,1)),2);
+		end
+
+		%Create the EvovledNodeB objects
 		for iStation = 1:networkLayout.NumMacro
-			Stations(iStation) = EvolvedNodeB(Param, 'macro', networkLayout.MacroCells{iStation}.CellID);
+			Stations(iStation) = EvolvedNodeB(Param, 'macro', macroCellID(iStation,1));
 			Stations(iStation).Position = [networkLayout.MacroCoordinates(iStation, :), Param.macroHeight];
 		end
 		for iStation = 1:networkLayout.NumMicro
-			Stations(iStation+networkLayout.NumMacro) = EvolvedNodeB(Param, 'micro', networkLayout.MicroCells{iStation}.CellID);
-			Stations(iStation+networkLayout.NumMacro).Position = [networkLayout.MicroCoordinates(iStation, :), Param.microHeight];
+			Stations(microCellID(iStation,2)) = EvolvedNodeB(Param, 'micro', microCellID(iStation,1));
+			Stations(microCellID(iStation,2)).Position = [networkLayout.MicroCoordinates(iStation, :), Param.microHeight];
 		end
 		for iStation = 1:networkLayout.NumPico
-			Stations(iStation+networkLayout.NumMacro+networkLayout.NumMicro) = EvolvedNodeB(Param, 'pico', networkLayout.PicoCells{iStation}.CellID);
-			Stations(iStation+networkLayout.NumMacro+networkLayout.NumMicro).Position = [networkLayout.PicoCoordinates(iStation, :), Param.picoHeight];
+			Stations(picoCellID(iStation,2)) = EvolvedNodeB(Param, 'pico', picoCellID(iStation,1));
+			Stations(picoCellID(iStation,2)).Position = [networkLayout.PicoCoordinates(iStation, :), Param.picoHeight];
 		end
-
 
 		% Add neighbours to each eNodeB
 		for iStation = 1:length(Stations)
 			Stations(iStation) = setNeighbours(Stations(iStation), Stations, Param);
 		end
 
-		%plotSNR(Param, Stations);
+		plotSNR(Param, Stations);
 
 		plotSINR(Param, Stations);
 
@@ -56,6 +75,9 @@ function [Stations, Param] = createBaseStations (Param)
 		plotControl(7,:) = [1 0 0 0]; %Plot Macro eNBs for SNR plot
 		plotControl(8,:) = [0 1 0 0]; %Plot Micro eNBs for SNR plot
 		plotControl(9,:) = [0 0 1 0]; %Plot pico eNBs for SNR plot
+		plotControl(10,:) = [1 0 0 0]; %Plot Macro eNBs for SINR plot
+		plotControl(11,:) = [0 1 0 0]; %Plot Micro eNBs for SINR plot
+		plotControl(12,:) = [0 0 1 0]; %Plot pico eNBs for SINR plot
 		%plotControl(10,:) = [1 1 1 1]; %Plot all kinds of eNBs for spider plot
 		networkLayout.draweNBs(Param, plotControl);
 		

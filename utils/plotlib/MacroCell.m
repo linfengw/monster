@@ -51,6 +51,7 @@ classdef MacroCell < BaseCell
 
         %Compute random pico pos within the different cells
         function obj = computePicoPos(obj, Param)
+            rng(Param.seed);
             %Picocells pr macro site
             picoPos = zeros(Param.numPico,2);
             iPico = 1;
