@@ -23,7 +23,9 @@ function [Stations, Param] = createBaseStations (Param)
 		Param = networkLayout.Param; %To update parameters to match a chosen scenario
 
 		%Draw the base stations
-		networkLayout.draweNBs(Param);	
+		if Param.draw
+			networkLayout.draweNBs(Param);
+		end
 		%eNB indexing - The CellID array now contains the ID of the eNB (row(:,1)) and the corresponding index in all eNB (row(:,2))
 		macroCellID = zeros(networkLayout.NumMacro,2);
 		microCellID = zeros(networkLayout.NumMicro,2);
