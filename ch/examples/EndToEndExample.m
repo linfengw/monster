@@ -6,7 +6,7 @@ Param.numMicro = 0;
 Param.numPico = 0;
 Param.numUsers = 1;
 Param.draw = 0;
-Param.schRounds = 800;
+Param.schRounds = 1;
 Param.channel.region = struct();
 Param.channel.region.macroScenario = 'UMa';
 Param.channel.enableShadowing = true;
@@ -52,17 +52,21 @@ end
 %% Uplink
 User.Tx = User.Tx.mapGridAndModulate(User, Param);
 
+Station.setScheduleUL(Param);
+
 User.Tx.plotSpectrum()
 User.Tx.plotResources()
 
 % Traverse channel uplink
 [Station, ~] = Channel.traverse(Station,User,'uplink');
 
-Station.Rx.plotSpectrum()
+Station.Rx.createReceivedSignal()
+
+Station.Rx.plotSpectrums()
 %Station.Rx.plotResources()
 
 % TODO: move this to Rx module logic
-testSubframe = lteSCFDMADemodulate(struct(User), setPower(Station.Rx.Waveform, Station.Rx.RxPwdBm) );
+testSubframe = lteSCFDMADemodulate(struct(User), Station.Rx.Waveform)
 [EstChannelGrid, NoiseEst] = lteULChannelEstimate(struct(User), User.Tx.PUSCH, ChannelEstimator.Uplink, testSubframe);
 [EqGrid, csi] = lteEqualizeMMSE(testSubframe, EstChannelGrid, NoiseEst);
 

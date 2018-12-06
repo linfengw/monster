@@ -177,6 +177,16 @@ classdef EvolvedNodeB < matlab.mixin.Copyable
 			end
 		end
 		
+		function userIds = getUserIDsScheduledDL(obj)
+			userIds = unique([obj.ScheduleDL]);
+		end
+
+
+				
+		function userIds = getUserIDsScheduledUL(obj)
+			userIds = unique([obj.ScheduleUL]);
+		end
+
 		% check utilisation wrapper
 		function obj = evaluatePowerState(obj, util, Param, loThr, hiThr, Stations)
 			% overload
@@ -251,7 +261,7 @@ classdef EvolvedNodeB < matlab.mixin.Copyable
 		end
 		
 		% set uplink static scheduling
-		function obj = setScheduleUL(obj, Param)
+		function setScheduleUL(obj, Param)
 			% Check the number of users associated with the eNodeB and initialise to all
 			associatedUEs = find([obj.Users.UeId] ~= -1);
 			% If the quota of PRBs is enough for all, then all are scheduled
@@ -333,6 +343,7 @@ classdef EvolvedNodeB < matlab.mixin.Copyable
 				obj.PowerIn = obj.Psleep;
 			end
 		end
+		
 		
 		% Reset an eNodeB at the end of a scheduling round
 		function obj = reset(obj, nextSchRound)

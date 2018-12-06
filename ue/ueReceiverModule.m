@@ -126,7 +126,7 @@ classdef ueReceiverModule < handle
 			% TODO: Select PMI, RI
 		end
 		
-		function obj = demodulateWaveform(obj,enbObj)
+		function demodulateWaveform(obj,enbObj)
 			% TODO: validate that a waveform exist.
 			enb = struct(enbObj);
 			Subframe = lteOFDMDemodulate(enb, obj.Waveform); %#ok

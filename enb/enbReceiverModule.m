@@ -61,7 +61,7 @@ classdef enbReceiverModule < handle
 		end
 
 		function createReceivedSignal(obj)
-			uniqueUes = unique([obj.enbObj.ScheduleUL]);
+			uniqueUes = obj.enbObj.getUserIDsScheduledUL();
 
 			% Check length of each received signal
 			for iUser = 1:length(uniqueUes)
@@ -70,7 +70,7 @@ classdef enbReceiverModule < handle
 			end
 			
 			% This will break with MIMO
-			obj.Waveform = zeros(max(waveformLengths),1)
+			obj.Waveform = zeros(max(waveformLengths),1);
 
 			for iUser = 1:length(uniqueUes)
 				ueId = uniqueUes(iUser);
@@ -79,7 +79,9 @@ classdef enbReceiverModule < handle
 			end
 			
 			% Create finalized waveform
-			obj.Waveform = sum(obj.Waveforms)
+			obj.Waveform = sum(obj.Waveforms, 1).';
+
+			% Waveform is transposed due to the SCFDMA demodulator requiring a column vector.
 		end
 
 		% Used to split the received waveform into the different portions of the different
