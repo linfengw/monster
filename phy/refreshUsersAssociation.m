@@ -12,7 +12,7 @@ function [Users, Stations] = refreshUsersAssociation(Users, Stations, Channel, P
 %   Stations		->  updated array of eNodeBs
 
 	% Create a local copy
-	StationsC = Stations;
+	StationsC = copy(Stations);
 	%Set the stored dummy frame as current waveform
 	for iStation = 1:length(Stations)
 		StationsC(iStation).Tx.Waveform = StationsC(iStation).Tx.Frame;

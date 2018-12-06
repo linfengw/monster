@@ -1,4 +1,4 @@
-classdef EvolvedNodeB < handle
+classdef EvolvedNodeB < matlab.mixin.Copyable
 	%   EVOLVED NODE B defines a value class for creating and working with eNodeBs
 	properties
 		%Matlab tool box default cell wide properties

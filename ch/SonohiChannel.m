@@ -347,7 +347,7 @@ classdef SonohiChannel < handle
 			RxPw = cell(length(Stations),1);
 			for iStation = 1:length(Stations)
 				%Local copy of all stations
-				StationC = Stations(iStation);
+				StationC = copy(Stations(iStation));
 				
 				% Associate user
 				StationC = StationC.resetScheduleDL();
