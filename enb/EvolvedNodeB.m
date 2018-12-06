@@ -101,7 +101,7 @@ classdef EvolvedNodeB < matlab.mixin.Copyable
 				obj.Rlc = struct('ArqTxBuffers', arqTxBulk(Param, cellId, 1:Param.numUsers, 0));
 			end
 			obj.Tx = enbTransmitterModule(obj, Param);
-			obj.Rx = enbReceiverModule(Param);
+			obj.Rx = enbReceiverModule(obj, Param);
 			obj.Users(1:Param.numUsers) = struct('UeId', -1, 'CQI', -1, 'RSSI', -1);
 			obj.AbsMask = Param.absMask; % 10 is the number of subframes per frame. This is the mask for the macro (0 == TX, 1 == ABS)
 			obj.PowerIn = 0;

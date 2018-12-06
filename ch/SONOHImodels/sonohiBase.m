@@ -2,7 +2,13 @@ classdef sonohiBase < handle
 	% This is the parent class for all channel modelling. Wrappers for channel models should be written using this structure. For examples on how to do so see the other implementations.
 	
 	properties
-		Channel % For accessing variables in the channel coordinator :class:`ch.SonohiChannel`
+		Channel % For accessing variables in the channel coordinator :class:`ch.SonohiChannel
+		
+		% Tempory variables for manipulating transmitted signal
+		RxWaveform;
+		RxWaveformInfo; 
+		RxPower;
+		RxSNR;
 	end
 	
 	methods
@@ -15,7 +21,7 @@ classdef sonohiBase < handle
 			% pass
 		end
 		
-		function [stations,users] = run(obj,Stations,Users, chtype, varargin)
+		function [users] = run(obj,Stations,Users, chtype, varargin)
 			% Main execution method, switches between uplink and downlink logic.
 			%
 			% :param varargin: If the channel property needs to be updated before execution it can be added as 'channel, :class:`ch.SonohiChannel`'
@@ -34,15 +40,14 @@ classdef sonohiBase < handle
 			switch chtype
 				case 'downlink'
 					users = obj.downlink(Stations,Users);
-					stations = Stations;
 				case 'uplink'
-					stations = obj.uplink(Stations,Users);
+					obj.uplink(Stations,Users);
 					users = Users;
 			end
 			
 		end
 		
-		function [stations] = uplink(obj, Stations, Users)
+		function uplink(obj, Stations, Users)
 			
 			stations = Stations;
 			numLinks = length(Users);
@@ -53,23 +58,31 @@ classdef sonohiBase < handle
 				station = Stations([Stations.NCellID] == Pairing(1,i));
 				user = Users(find([Users.NCellID] == Pairing(2,i))); %#ok
 				
-				%% TODO: replace this with compound waveform selection (shaping of all received waveforms)
-				station = obj.setWaveform(user, station);
+				% Set waveform to be manipulated
+				obj.setWaveform(user)
 				
 				% Get channel conditions (Slow variants, i.e. path loss
-				[station, ~] = obj.computeLinkBudget(station, user, 'uplink');
+				obj.computeLinkBudget(station, user, 'uplink');
 				
 				if strcmp(obj.Channel.fieldType,'full')
 					if obj.Channel.enableFading
-						station = obj.addFading(user, station, 'uplink');
+						obj.addFading(user, station, 'uplink');
 					end
-					station = obj.addAWGN(user, station, 'uplink');
+					obj.addAWGN(user, Pairing(:,i), 'uplink');
 				else
-					station = obj.addAWGN(user, station,  'uplink');
+					obj.addAWGN(user, Pairing(:,i), 'uplink');
 				end
 				
 				
-				stations(find([Stations.NCellID] == Pairing(1,i))) = station;
+				% Set received signal
+				obj.setReceivedSignal(station, user);
+				
+				% Add propdelay
+				obj.addPropDelay(station, user);
+				
+				% Clear tempory variables
+				obj.clearTempVariables()
+
 			end
 
 		end
@@ -96,23 +109,30 @@ classdef sonohiBase < handle
 				% Local copy for mutation
 				station = Stations([Stations.NCellID] == Pairing(1,i));
 				user = Users(find([Users.NCellID] == Pairing(2,i))); %#ok
-				
-				% Setup transmission
-				user = obj.setWaveform(station, user);
-				
-				% compute link budget and calculate Receiver power
-				[~, user] = obj.computeLinkBudget(station, user, 'downlink');
+			
+				% Set waveform to be manipulated
+				obj.setWaveform(station)
+					
+				% compute link budget and calculate Received power
+				obj.computeLinkBudget(station, user, 'downlink');
 				
 				if strcmp(obj.Channel.fieldType,'full')
 					if obj.Channel.enableFading
-						user = obj.addFading(station, user, 'downlink');
+						obj.addFading(station, user, 'downlink');
 					end
-					user = obj.addAWGN(station, user, 'downlink');
+					obj.addAWGN(station, Pairing(:,i), 'downlink');
 				else
-					user = obj.addAWGN(station, user, 'downlink');
+					obj.addAWGN(station, Pairing(:,i), 'downlink');
 				end
+		
+				% Set received signal
+				user = obj.setReceivedSignal(user);
 				
+				% Add propdelay
 				user = obj.addPropDelay(station, user);
+				
+				% Clear tempory variables
+				obj.clearTempVariables()
 				
 				% Write changes to user object in array.
 				users(find([Users.NCellID] == Pairing(2,i))) = user;
@@ -140,68 +160,65 @@ classdef sonohiBase < handle
 				case 'downlink'
 					lossdB = obj.computePathLoss(Station, User, Station.Tx.Freq);
 					EIRPdBm = Station.Tx.getEIRPdBm;
-					rxPwdBm = EIRPdBm-lossdB-User.Rx.NoiseFigure; %dBm
-					User.Rx.RxPwdBm = rxPwdBm;
+					recievedPower = EIRPdBm-lossdB-User.Rx.NoiseFigure; %dBm
+					obj.RxPower = recievedPower;
 				case 'uplink'
 					lossdB = obj.computePathLoss(Station, User, User.Tx.Freq);
 					EIRPdBm = User.Tx.getEIRPdBm;
-					rxPwdBm = EIRPdBm-lossdB-Station.Rx.NoiseFigure; %dBm
-					Station.Rx.RxPwdBm = rxPwdBm;
+					recievedPower = EIRPdBm-lossdB-Station.Rx.NoiseFigure; %dBm
+					obj.RxPower = recievedPower;
 			end
 
 		end
 
 		
-		function [RxNode] = addAWGN(obj, TxNode, RxNode,mode)
+		function addAWGN(obj, TxNode, paring, mode)
 			% Adds gaussian noise based on thermal noise and calculated recieved power.
 			
 			% TODO: Gas Loss relevant to compute when moving into mmWave range
 			%gasLossdB = obj.atmosphericLoss(TxNode, RxNode);
-			thermalLossdBm = obj.thermalLoss(RxNode);
+			thermalLossdBm = obj.thermalLoss();
 			
 			%rxNoiseFloor = thermalLossdB-gasLossdB;
 			rxNoiseFloor = thermalLossdBm;
-			SNR = RxNode.Rx.RxPwdBm-rxNoiseFloor;
+			SNR = obj.RxPower-rxNoiseFloor;
 			SNRLin = 10^(SNR/10);
-			str1 = sprintf('Station(%i) to User(%i)\n SNR:  %s\n RxPw:  %s\n', TxNode.NCellID,RxNode.NCellID,num2str(SNR),num2str(RxNode.Rx.RxPwdBm));
-			sonohilog(str1,'NFO0');
+			
 			
 			% Compute spectral noise density NO
 			switch mode
 				case 'downlink'
-				Es = sqrt(2.0*TxNode.CellRefP*double(RxNode.Rx.WaveformInfo.Nfft));
+				Es = sqrt(2.0*TxNode.CellRefP*double(obj.RxWaveformInfo.Nfft));
 				N0 = 1/(Es*SNRLin);
+				str1 = sprintf('Station(%i) to User(%i)\n SNR:  %s\n RxPw:  %s\n', paring(1), paring(2), num2str(SNR),num2str(obj.RxPower));
+				sonohilog(str1,'NFO0');
 				case 'uplink'
-				N0 = 1/(SNRLin * sqrt(double(RxNode.Rx.WaveformInfo.Nfft)))/sqrt(2);
+				N0 = 1/(SNRLin * sqrt(double(obj.RxWaveformInfo.Nfft)))/sqrt(2);
+								str1 = sprintf('User(%i) to Station(%i)\n SNR:  %s\n RxPw:  %s\n', paring(2), paring(1), num2str(SNR),num2str(obj.RxPower));
+				sonohilog(str1,'NFO0');
 			end
 			
 			% Add AWGN
-			noise = N0*complex(randn(size(RxNode.Rx.Waveform)), randn(size(RxNode.Rx.Waveform)));
-			rxSig = RxNode.Rx.Waveform + noise;
+			noise = N0*complex(randn(size(obj.RxWaveform)), randn(size(obj.RxWaveform)));
+			rxSig = obj.RxWaveform + noise;
 			
 			% Write info to receiver object
-			RxNode.Rx.SNR = SNRLin;
-			RxNode.Rx.Waveform = rxSig;
+			obj.RxSNR = SNRLin;
+			obj.RxWaveform = rxSig;
 			
 		end
 		
-		
-		
-	end
-	
-	methods(Static)
-		
-		function RxNode = setWaveform(TxNode, RxNode)
+		function setWaveform(obj, TxNode)
 			% Copies waveform and waveform info to Rx module, enables transmission.
-			RxNode.Rx.Waveform = TxNode.Tx.Waveform;
-			RxNode.Rx.WaveformInfo =  TxNode.Tx.WaveformInfo;
+			obj.RxWaveform = TxNode.Tx.Waveform;
+			obj.RxWaveformInfo =  TxNode.Tx.WaveformInfo;
 		end
 		
-		function lossdBm = thermalLoss(RxNode)
+		function lossdBm = thermalLoss(obj)
 			% Compute thermal loss based on bandwidth, at T = 290 K.
 			% Worst case given by the number of resource blocks. Bandwidth is
 			% given based on the waveform. Computed using matlabs :obj:`obw`
-			bw = obw(RxNode.Rx.Waveform, RxNode.Rx.WaveformInfo.SamplingRate);
+			bw = obw(obj.RxWaveform, obj.RxWaveformInfo.SamplingRate);
 			T = 290;
 			k = physconst('Boltzmann');
 			thermalNoise = k*T*bw;
@@ -209,8 +226,38 @@ classdef sonohiBase < handle
 		end
 		
 		
+	 function RxNode = setReceivedSignal(obj, RxNode, varargin)
+			% Copies waveform and waveform info to Rx module, enables transmission.
+			% Based on the class of RxNode, uplink or downlink can be determined
+			
+			if isa(RxNode, 'EvolvedNodeB')
+				userId = varargin{1}.NCellID;
+				RxNode.Rx.createRecievedSignalStruct(userId);
+				RxNode.Rx.ReceivedSignals{userId}.Waveform = obj.RxWaveform;
+				RxNode.Rx.ReceivedSignals{userId}.WaveformInfo = obj.RxWaveformInfo;
+				RxNode.Rx.ReceivedSignals{userId}.RxPwdBm = obj.RxPower;
+				RxNode.Rx.ReceivedSignals{userId}.SNR = obj.RxSNR;
+			elseif isa(RxNode, 'UserEquipment')
+				RxNode.Rx.Waveform = obj.RxWaveform;
+				RxNode.Rx.WaveformInfo =  obj.RxWaveformInfo;
+				RxNode.Rx.RxPwdBm = obj.RxPower;
+				RxNode.Rx.SNRdB = obj.RxSNR;
+			end
+	 end
+		
+	 
+	 function clearTempVariables(obj)
+		 obj.RxPower = [];
+		 obj.RxSNR = [];
+		 obj.RxWaveform = [];
+		 obj.RxWaveformInfo = [];
+	 end
+		
+		
+		
 	end
 	
+
 	
 	
 end

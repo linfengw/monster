@@ -176,7 +176,7 @@ classdef NetworkLayout < handle
                     Param.macroHeight = 35;
                     Param.microHeight = 10;
                     Param.picoHeight = 5;
-                    Param.numUsers = 1;
+                    %Param.numUsers = 1;
                     Param.ueHeight = 1.5;
                     Param.primaryTrafficModelling = 'fullBuffer';
                     Param.trafficMix = 1;

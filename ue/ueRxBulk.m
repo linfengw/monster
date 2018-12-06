@@ -41,9 +41,9 @@ function Users = ueRxBulk(Stations, Users, cec)
 		end
 		
     % Try demodulation
-    [demodBool, user.Rx] = user.Rx.demodulateWaveform(station);
+    user.Rx.demodulateWaveform(station);
     % demodulate received waveform, if it returns 1 (true) then demodulated
-    if demodBool
+    if user.Rx.Demod
       % Estimate Channel
 			user.Rx = user.Rx.estimateChannel(station, cec);
       % Equalize signal

@@ -44,7 +44,7 @@ classdef sonohi3GPP38901 < sonohiBase
 				
 			end
 		end
-		function RxNode = addFading(obj, TxNode, RxNode, mode)
+		function addFading(obj, TxNode, RxNode, mode)
 			% TODO: Add possibility to change the fading model used from parameters.
 			fadingmodel = 'tdl';
 
@@ -58,7 +58,7 @@ classdef sonohi3GPP38901 < sonohiBase
 			fc = TxNode.Tx.Freq*10e5;          % carrier frequency in Hz
 			c = physconst('lightspeed'); % speed of light in m/s
 			fd = (v*1000/3600)/c*fc;     % UT max Doppler frequency in Hz
-			sig = [RxNode.Rx.Waveform;zeros(200,1)];
+			sig = [obj.RxWaveform;zeros(200,1)];
 
 			switch fadingmodel
 				case 'cdl'
@@ -71,7 +71,7 @@ classdef sonohi3GPP38901 < sonohiBase
 					cdl.InitialTime = obj.Channel.getSimTime();
 					cdl.TransmitAntennaArray.Size = [1 1 1 1 1];
 					cdl.ReceiveAntennaArray.Size = [1 1 1 1 1];
-					RxNode.Rx.Waveform = cdl(sig);
+					obj.RxWaveform = cdl(sig);
 				case 'tdl'
 
 					tdl = nrTDLChannel;
@@ -90,7 +90,7 @@ classdef sonohi3GPP38901 < sonohiBase
 					tdl.NumTransmitAntennas = 1;
 					tdl.NumReceiveAntennas = 1;
 
-					RxNode.Rx.Waveform = tdl(sig);
+					obj.RxWaveform = tdl(sig);
 
 				end
 		end

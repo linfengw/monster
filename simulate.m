@@ -42,7 +42,7 @@ end
 if Param.draw
 	ENBsummaryplt = ENBsummaryPlot(Stations);
 	UEsummaryplt = UESummaryPlot(Users);
-	plotcoverage(Stations, Channel, Param)
+%	plotcoverage(Stations, Channel, Param)
 	%drawHeatMap(HeatMap, Stations);
 end
 

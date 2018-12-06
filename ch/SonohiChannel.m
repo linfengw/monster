@@ -144,24 +144,22 @@ classdef SonohiChannel < handle
 			validateChannel(obj);
 			validateStations(Stations);
 			validateUsers(Users);
-			stations = Stations;
 			users = Users;
 			
 			switch chtype
 				case 'downlink'
-					[~, users] = obj.Model.run(stations,users, chtype,'channel',obj);
+					[users] = obj.Model.run(Stations,users, chtype,'channel',obj);
 				case 'uplink'
-					[stations, ~] = obj.Model.run(stations,users, chtype,'channel',obj);
+					[~] = obj.Model.run(Stations,users, chtype,'channel',obj);
 			end
 			
 			if strcmp(obj.fieldType,'full')
 				if obj.enableInterference
-					users = obj.applyInterference(stations,users,chtype);
+					users = obj.applyInterference(Stations,users,chtype);
 				end
 			end
 			
 			Users = users;
-			Stations = stations;
 			
 			
 		end

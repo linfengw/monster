@@ -15,7 +15,7 @@ for iStation = 1:length(Stations)
 	
 	% First off, check whether this station has received anything in UL.
 	% If not, it simply means that there are no UEs connected to it
-	if isempty(enb.Rx.Waveform)
+	if isempty(enb.Rx.anyReceivedSignals())
 		sonohilog(sprintf('eNodeB %i has an empty received waveform',enb.NCellID), 'NFO');
 		continue;
 	end
@@ -27,7 +27,11 @@ for iStation = 1:length(Stations)
 	enbUsers = Users(scheduledUEsIds);
 	
 	% Parse received waveform
-	enb.Rx = enb.Rx.parseWaveform(enb);
+	% TODO: Concatenate waveforms from receiver module into one single
+	% waveform. Set power of each waveform.
+	enb.Rx.parseWaveform(enb);
+	
+	%enb.Rx.createReceivedSignal();
 	
 	% Demodulate received waveforms
 	enb.Rx = enb.Rx.demodulateWaveforms(enbUsers);

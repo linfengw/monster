@@ -1,48 +1,95 @@
 classdef enbReceiverModule < handle
 	properties
 		NoiseFigure;
-		Waveform;
-		WaveformInfo;
 		UeData;
-		RxPwdBm;
-		SNR;
-		Waveforms; %Cells containing: waveform(s) from a user, and userID
+		ReceivedSignals; %Cells containing: waveform(s) from a user, and userID
+		Waveform;
+		Waveforms;
+	end
+	
+	properties(Access=private)
+		enbObj; % Parent object
 	end
 	
 	methods
 		
-		function obj = enbReceiverModule(Param)
+		function obj = enbReceiverModule(enbObj, Param)
 			obj.NoiseFigure = Param.eNBNoiseFigure;
-			obj.Waveforms = cell(Param.numUsers,2);
+			obj.ReceivedSignals = cell(Param.numUsers,1);
+			obj.enbObj = enbObj;
 		end
 		
-		function obj = set.Waveform(obj,Sig)
-			obj.Waveform = Sig;
-		end
-		
-		function obj = set.RxPwdBm(obj,RxPwdBm)
-			obj.RxPwdBm = RxPwdBm;
+		function createRecievedSignalStruct(obj, id)
+			obj.ReceivedSignals{id} = struct('Waveform', [], 'WaveformInfo', [], 'RxPwdBm', [], 'SNR', []);
 		end
 
 		function obj = set.UeData(obj,UeData)
 			obj.UeData = UeData;
 		end
 		
+		function foundSignals = anyReceivedSignals(obj)
+			numberOfUsers = length(obj.ReceivedSignals);
+			foundSignals = false;
+			for iUser = 1:numberOfUsers
+				if isempty(obj.ReceivedSignals{iUser})
+					continue
+				end
+				
+				if isempty(obj.ReceivedSignals{iUser}.Waveform)
+					continue
+				end
+				
+				foundSignals = true;
+						
+			end
+			
+		end
+		
 		function plotSpectrum(obj)
 			figure
 			plot(10*log10(abs(fftshift(fft(obj.Waveform)))))
 		end
+		
+	 function plotSpectrums(obj)
+			figure
+			hold on
+			uniqueUes = unique([obj.enbObj.ScheduleUL]);
+			for iUser = 1:length(uniqueUes)
+				plot(10*log10(abs(fftshift(fft(obj.Waveforms(iUser,:))))))	
+				
+			end
+		end
+
+		function createReceivedSignal(obj)
+			uniqueUes = unique([obj.enbObj.ScheduleUL]);
+
+			% Check length of each received signal
+			for iUser = 1:length(uniqueUes)
+				ueId = uniqueUes(iUser);
+				waveformLengths(iUser) =  length(obj.ReceivedSignals{ueId}.Waveform);
+			end
+			
+			% This will break with MIMO
+			obj.Waveform = zeros(max(waveformLengths),1)
+
+			for iUser = 1:length(uniqueUes)
+				ueId = uniqueUes(iUser);
+				% Add waveform with corresponding power
+				obj.Waveforms(iUser,:) = setPower(obj.ReceivedSignals{ueId}.Waveform, obj.ReceivedSignals{ueId}.RxPwdBm);
+			end
+			
+			% Create finalized waveform
+			obj.Waveform = sum(obj.Waveforms)
+		end
 
 		% Used to split the received waveform into the different portions of the different
 		% UEs scheduled in the UL
-		function obj = parseWaveform(obj, enbObj)
+		function parseWaveform(obj, enbObj)
 			uniqueUes = unique([enbObj.ScheduleUL]);
-			scFraction = length(obj.Waveform)/length(uniqueUes);
 			for iUser = 1:length(uniqueUes)
-				scStart = (iUser - 1)*scFraction ;
-				scEnd = scStart + scFraction;
-				obj.UeData(iUser).UeId = uniqueUes(iUser);
-				obj.UeData(iUser).Waveform = obj.Waveform(scStart + 1 : scEnd, 1);
+				ueId = uniqueUes(iUser);
+				obj.UeData(iUser).UeId = ueId;
+				obj.UeData(iUser).Waveform = obj.ReceivedSignals{ueId}.Waveform;
 			end
 		end
 		
@@ -64,6 +111,7 @@ classdef enbReceiverModule < handle
 			end
 			
 		end
+		
 		
 		function obj = estimateChannels(obj, ueObjs, cec)
 			for iUser = 1:length(ueObjs)
@@ -155,8 +203,8 @@ classdef enbReceiverModule < handle
 		function obj = reset(obj)
 			obj.UeData = [];
 			obj.Waveform = [];
-			obj.RxPwdBm = [];
 			obj.Waveforms = {};
+			obj.ReceivedSignals = {};
 		end
 		
 	end
