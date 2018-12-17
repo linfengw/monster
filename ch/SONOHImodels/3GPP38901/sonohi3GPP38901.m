@@ -63,7 +63,7 @@ classdef sonohi3GPP38901 < sonohiBase
 			switch fadingmodel
 				case 'cdl'
 					cdl = nrCDLChannel;
-					cdl.DelayProfile = 'CDL-A';
+					cdl.DelayProfile = 'CDL-C';
 					cdl.DelaySpread = 300e-9;
 					cdl.CarrierFrequency = fc;
 					cdl.MaximumDopplerShift = fd;
@@ -71,6 +71,7 @@ classdef sonohi3GPP38901 < sonohiBase
 					cdl.InitialTime = obj.Channel.getSimTime();
 					cdl.TransmitAntennaArray.Size = [1 1 1 1 1];
 					cdl.ReceiveAntennaArray.Size = [1 1 1 1 1];
+					cdl.SampleDensity = 256;
 					obj.RxWaveform = cdl(sig);
 				case 'tdl'
 
@@ -82,15 +83,20 @@ classdef sonohi3GPP38901 < sonohiBase
 						tdl.TransmissionDirection = 'Uplink';
 					end
 					% TODO: Add MIMO to fading channel
-					tdl.DelayProfile = 'TDL-A';
+					tdl.DelayProfile = 'TDL-E';
 					tdl.DelaySpread = 300e-9;
+					%tdl.MaximumDopplerShift = 0;
 					tdl.MaximumDopplerShift = fd;
 					tdl.SampleRate = TxNode.Tx.WaveformInfo.SamplingRate;
 					tdl.InitialTime = obj.Channel.getSimTime();
 					tdl.NumTransmitAntennas = 1;
 					tdl.NumReceiveAntennas = 1;
-
-					obj.RxWaveform = tdl(sig);
+					tdl.NormalizePathGains = false;
+					tdl.NormalizeChannelOutputs = false;
+					%tdl.KFactorScaling = true;
+					%tdl.KFactor = 3;
+					[obj.RxWaveform, obj.RxPathGains, ~] = tdl(sig);
+					obj.RxPathFilters = getPathFilters(tdl);
 
 				end
 		end

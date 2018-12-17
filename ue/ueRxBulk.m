@@ -45,15 +45,15 @@ function Users = ueRxBulk(Stations, Users, cec)
     % demodulate received waveform, if it returns 1 (true) then demodulated
     if user.Rx.Demod
       % Estimate Channel
-			user.Rx = user.Rx.estimateChannel(station, cec);
+			user.Rx.estimateChannel(station, cec);
       % Equalize signal
-			user.Rx = user.Rx.equaliseSubframe();
+			user.Rx.equaliseSubframe();
       % Estimate PDSCH (main data channel)
-			user.Rx = user.Rx.estimatePdsch(user, station);
+			user.Rx.estimatePdsch(user, station);
 			% calculate EVM
-			user.Rx = user.Rx.calculateEvm(station);
+			user.Rx.calculateEvm(station);
 			% Calculate the CQI to use
-			user.Rx = user.Rx.selectCqi(station);
+			user.Rx.selectCqi(station);
 			% Log block reception stats
 			user.Rx = user.Rx.logBlockReception(user);
     else

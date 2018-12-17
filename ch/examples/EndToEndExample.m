@@ -6,14 +6,13 @@ Param.numMicro = 0;
 Param.numPico = 0;
 Param.numUsers = 1;
 Param.draw = 0;
-Param.schRounds = 1;
+Param.schRounds = 300;
 Param.channel.region = struct();
 Param.channel.region.macroScenario = 'UMa';
 Param.channel.enableShadowing = true;
 Param.channel.enableFading = true;
 Param.channel.enableInterference = false;
-Param.channel.modeDL = '3GPP38901';
-Param.channel.modeUL = '3GPP38901';
+Param.channel.perfectSynchronization = true;
 
 
 if Param.draw
@@ -35,48 +34,65 @@ User.ENodeBID = Station.NCellID;
 
 %% Downlink
 downlink_cqi = nan(Param.schRounds,1);
+uplink_csi = nan(Param.schRounds, 300, 14);
+uplink_noise_est = nan(Param.schRounds,1);
+uplink_snr_calc = nan(Param.schRounds,1);
+UserDistance = 100;
 for subframe = 1:Param.schRounds
 Station.NSubframe = subframe-1;
 Station.Tx.createReferenceSubframe();
 Station.Tx.assignReferenceSubframe();
-
+%Station.Tx.plotSpectrum();
+User.NSubframe = subframe-1;
+User.Position(1:2) = Station.Position(1:2) + [UserDistance, 0];
 % Traverse channel
 Channel.iRound = subframe-1;
 [~, User] = Channel.traverse(Station,User,'downlink');
-
+%User.Rx.plotSpectrum()
 User.Rx.receiveDownlink(Station, ChannelEstimator.Downlink);
 fprintf("Subframe %i Downlink CQI: %i \n", subframe-1, User.Rx.CQI)
 downlink_cqi(subframe) = User.Rx.CQI;
-end
-
+downlink_snr(subframe) = User.Rx.SNRdB;
+downlink_noiseest(subframe) = 10*log10(1/User.Rx.NoiseEst);
+downlink_sinrs(subframe,:) = User.Rx.SINRS;
 %% Uplink
 User.Tx = User.Tx.mapGridAndModulate(User, Param);
 
 Station.setScheduleUL(Param);
 
-User.Tx.plotSpectrum()
-User.Tx.plotResources()
+%User.Tx.plotSpectrum()
+%User.Tx.plotResources()
 
 % Traverse channel uplink
 [Station, ~] = Channel.traverse(Station,User,'uplink');
-
+uplink_snr_calc(subframe,:) = 20*log10(Station.Rx.ReceivedSignals{1}.SNR);
 Station.Rx.createReceivedSignal()
 
-Station.Rx.plotSpectrums()
+
+%Station.Rx.plotSpectrums()
 %Station.Rx.plotResources()
 
 % TODO: move this to Rx module logic
-testSubframe = lteSCFDMADemodulate(struct(User), Station.Rx.Waveform)
-[EstChannelGrid, NoiseEst] = lteULChannelEstimate(struct(User), User.Tx.PUSCH, ChannelEstimator.Uplink, testSubframe);
-[EqGrid, csi] = lteEqualizeMMSE(testSubframe, EstChannelGrid, NoiseEst);
+testSubframe = lteSCFDMADemodulate(struct(User), Station.Rx.Waveform);
+[EstChannelGrid, uplink_noise_est(subframe,:)] = lteULChannelEstimate(struct(User), User.Tx.PUSCH, ChannelEstimator.Uplink, testSubframe);
+[EqGrid, uplink_csi(subframe,:,:)] = lteEqualizeMMSE(testSubframe, EstChannelGrid, uplink_noise_est(subframe,:));
 
+end
 
+save(sprintf('DownlinkCQI_uplinkCSI_%im_%isubframes_300e-9deplaySpread_0doppler.mat',UserDistance,Param.schRounds),'downlink_cqi', 'downlink_noiseest','downlink_sinrs','downlink_snr','uplink_csi');
 
 figure
 subplot(2,1,1)
 mesh(abs(User.Rx.CSI))
-subplot(2,1,2)
-mesh(abs(csi))
+
+figure
+ylim([min(min(min(abs(squeeze(uplink_csi(:,:,:)))))), max(max(max(abs(squeeze(uplink_csi(:,:,:))))))])
+for subframe = 1:Param.schRounds
+	mesh(abs(squeeze(uplink_csi(subframe,:,:))))
+	
+	drawnow;
+	pause(0.1)
+end
 
 figure
 subplot(2,1,1)
@@ -85,10 +101,23 @@ subplot(2,1,2)
 mesh(abs(EqGrid))
 
 figure
-plot(downlink_cqi_fading_tdlc)
+yyaxis left
+plot(downlink_cqi)
+ylim([0 16])
+ylabel('CQI')
 hold on
-plot(downlink_cqi_fading_tdla)
-plot(downlink_cqi_nofading)
+yyaxis right
+plot(downlink_snr)
+plot(downlink_noiseest,'o')
+plot(downlink_sinrs(:,1))
+plot(10*log10(1./uplink_noise_est(:,1)),'*')
+plot(uplink_snr_calc(:,1),'<')
+minSNR = min([min(downlink_snr), min(downlink_noiseest), min(downlink_sinrs)]);
+ylabel('SNR (dB)')
+xlabel('Subframe #')
+ylim([minSNR-10 40])
+legend('Downlink CQI', 'Calculated SNR', 'Estimated SNR', 'Equalizer wideband SNR')
+
 
 legend('TDL-C profile', 'TDL-A profile', 'no fading')
 xlabel('Subframe #')

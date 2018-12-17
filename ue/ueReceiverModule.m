@@ -13,6 +13,8 @@ classdef ueReceiverModule < handle
 		Waveform;
     WaveformInfo;
 		RxPwdBm; % Wideband
+		PathGains; % Used for perfect synchronization
+		PathFilters; % Used for perfect synchronization
 		IntSigLoss;
 		Subframe;
 		EqSubframe;
@@ -21,6 +23,7 @@ classdef ueReceiverModule < handle
 		PreEvm;
 		PostEvm;
 		CQI;
+		SINRS
 		CSI;
 		Offset;
 		BLER;
@@ -33,6 +36,10 @@ classdef ueReceiverModule < handle
 		HistoryStats;
 		Demod;
         ChannelConditions = struct(); % Storage of channel conditions
+	end
+
+	properties (Access = private)
+	PerfectSynchronization;
 	end
 	
 	methods
@@ -47,6 +54,7 @@ classdef ueReceiverModule < handle
 				cellstring = char(strcat("NCellID",int2str(iStation)));
 				obj.HistoryStats.(cellstring) = struct('SINRdB',[],'SNRdB',[],'RxPwdBm',[]);
 			end
+			obj.PerfectSynchronization = Param.channel.perfectSynchronization;
 		end
 		
 		function oldValues = getFromHistory(obj, field, stationID)
@@ -78,7 +86,7 @@ classdef ueReceiverModule < handle
 		function obj = set.SNR(obj,SNR)
 			% SNR given linear
 			obj.SNR = SNR;
-			obj.SNRdB = 10*log10(SNR);
+			obj.SNRdB = 20*log10(SNR);
 		end
 		
 		function obj = set.RxPwdBm(obj,RxPwdBm)
@@ -105,8 +113,7 @@ classdef ueReceiverModule < handle
 			% Apply the receiver chain for subframe recovery
 			
 			% Find synchronization, apply offset
-			obj.computeOffset(enb);
-			obj.applyOffset();
+			obj.applyOffset(enb);
 			
 			% Conduct reference measurements
 			obj.referenceMeasurements(enb);
@@ -232,7 +239,7 @@ classdef ueReceiverModule < handle
 		% select CQI
 		function obj = selectCqi(obj, enbObj)
 			enb = struct(enbObj); %#OK
-			[obj.CQI, ~] = lteCQISelect(enb, enbObj.Tx.PDSCH, obj.EstChannelGrid, obj.NoiseEst);
+			[obj.CQI, obj.SINRS] = lteCQISelect(enb, enbObj.Tx.PDSCH, obj.EstChannelGrid, obj.NoiseEst);
 			if isnan(obj.CQI)
 				sonohilog('CQI is NaN - something went wrong in the selection.','ERR')
 			end
@@ -268,7 +275,12 @@ classdef ueReceiverModule < handle
 			obj.RSRQdB = meas.RSRQdB;
 		end
 		
-		function obj = applyOffset(obj)
+		function obj = applyOffset(obj, enbObj)
+			if obj.PerfectSynchronization && ~isempty(obj.PathGains)
+				obj.Offset = nrPerfectTimingEstimate(obj.PathGains,obj.PathFilters);
+			else
+				obj.computeOffset(enbObj)
+			end
 			obj.Waveform = obj.Waveform(obj.Offset+1:end);
 		end
 		

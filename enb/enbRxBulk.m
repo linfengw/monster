@@ -27,26 +27,27 @@ for iStation = 1:length(Stations)
 	enbUsers = Users(scheduledUEsIds);
 	
 	% Parse received waveform
-	% TODO: Concatenate waveforms from receiver module into one single
-	% waveform. Set power of each waveform.
 	enb.Rx.parseWaveform(enb);
 	
+	% TODO: For a more realistic view of uplink interference the function
+	% call below can be used to create a combined waveform of all user uplink
+	% waveforms.
 	%enb.Rx.createReceivedSignal();
 	
 	% Demodulate received waveforms
-	enb.Rx = enb.Rx.demodulateWaveforms(enbUsers);
+	enb.Rx.demodulateWaveforms(enbUsers);
 	
 	% Estimate Channel
-	enb.Rx = enb.Rx.estimateChannels(enbUsers, cec);
+	enb.Rx.estimateChannels(enbUsers, cec);
 	
 	% Equalise
-	enb.Rx = enb.Rx.equaliseSubframes(enbUsers);
+  enb.Rx.equaliseSubframes(enbUsers);
 	
 	% Estimate PUCCH (Main UL control channel) for UEs
-	enb.Rx = enb.Rx.estimatePucch(enb, enbUsers, timeNow);
+	enb.Rx.estimatePucch(enb, enbUsers, timeNow);
 	
 	% Estimate PUSCH (Main UL control channel) for UEs
-	enb.Rx = enb.Rx.estimatePusch(enb, enbUsers, timeNow);
+	enb.Rx.estimatePusch(enb, enbUsers, timeNow);
 	
 	Stations(iStation) = enb;
 end

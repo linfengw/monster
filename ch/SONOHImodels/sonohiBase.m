@@ -9,6 +9,9 @@ classdef sonohiBase < handle
 		RxWaveformInfo; 
 		RxPower;
 		RxSNR;
+		RxSNRdB;
+		RxPathGains;
+		RxPathFilters;
 	end
 	
 	methods
@@ -117,10 +120,10 @@ classdef sonohiBase < handle
 				obj.computeLinkBudget(station, user, 'downlink');
 				
 				if strcmp(obj.Channel.fieldType,'full')
+					obj.addAWGN(station, Pairing(:,i), 'downlink');
 					if obj.Channel.enableFading
 						obj.addFading(station, user, 'downlink');
 					end
-					obj.addAWGN(station, Pairing(:,i), 'downlink');
 				else
 					obj.addAWGN(station, Pairing(:,i), 'downlink');
 				end
@@ -182,7 +185,7 @@ classdef sonohiBase < handle
 			%rxNoiseFloor = thermalLossdB-gasLossdB;
 			rxNoiseFloor = thermalLossdBm;
 			SNR = obj.RxPower-rxNoiseFloor;
-			SNRLin = 10^(SNR/10);
+			SNRLin = 10^((SNR)/20);
 			
 			
 			% Compute spectral noise density NO
@@ -204,6 +207,7 @@ classdef sonohiBase < handle
 			
 			% Write info to receiver object
 			obj.RxSNR = SNRLin;
+			obj.RxSNRdB = SNR;
 			obj.RxWaveform = rxSig;
 			
 		end
@@ -241,7 +245,9 @@ classdef sonohiBase < handle
 				RxNode.Rx.Waveform = obj.RxWaveform;
 				RxNode.Rx.WaveformInfo =  obj.RxWaveformInfo;
 				RxNode.Rx.RxPwdBm = obj.RxPower;
-				RxNode.Rx.SNRdB = obj.RxSNR;
+				RxNode.Rx.SNR = obj.RxSNR;
+				RxNode.Rx.PathGains = obj.RxPathGains;
+				RxNode.Rx.PathFilters = obj.RxPathFilters;
 			end
 	 end
 		
