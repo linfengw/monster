@@ -5,7 +5,7 @@ Param.rmResults = 0;% Boolean to clean the results folder
 Param.logToFile = 0; % Boolean, if true all logs are re-directed to a file in /logs
 
 % Boolean used to enable the drawing of plots and other cool stuff
-Param.draw = 0;
+Param.draw = 1;
 
 % Booelan used to store the transmission data, that is each TB, codeword, waveform
 Param.storeTxData = 0;
@@ -39,10 +39,10 @@ Param.picoPos = 'uniform'; % Array of char to decide the positioning of the micr
 Param.picoUniformRadius = 200;% Double radius of distance from centre for picoBS in metres
 Param.picoHeight = 5;% Double used to specify the height in metres of the pico eNodeBs
 Param.numEnodeBs = Param.numMacro + Param.numMicro + Param.numPico;
-Param.posScheme = 'Single Cell' % Array of char describing if a standard scheme/scenario should be used 
+Param.posScheme = 'None' % Array of char describing if a standard scheme/scenario should be used 
 				%['3GPP TR 38.901 UMa', '3GPP TR 38.901 RMa', 'ITU-R M.2412-0 5.B.C', 'ITU-R M2412-0 5.C.A', 'Single Cell'] leave empty for no scenario
 Param.ueHeight = 1.5;% Double used to specify the height in metres of the UEs
-Param.numUsers = 1;% Integer used for the number of UEs
+Param.numUsers = 2;% Integer used for the number of UEs
 Param.mobilityScenario = 'pedestrian';% Integer to choose the mobility scenario (pedestrian, pedestrian-indoor, vehicular, static, superman, straight)
 Param.buildings = 'mobility/buildings.txt';% Path for loading the file with the buildings
 Param.mobilityStep = 0.01;
@@ -82,6 +82,7 @@ Param.channel.mode = '3GPP38901';% String to control the channel mode in DL ['wi
 Param.channel.region = 'Urban';% String to control the channel region
 Param.channel.enableFading = true;
 Param.channel.enableInterference = false;
+Param.channel.perfectSynchronization = true;
 Param.channel.enableShadowing = true; % Only capable for 3GPP38901
 Param.channel.computeCoverage = false; %Only a visualization feature. Force the recomputation of the coverage, otherwise loaded from file if stored.
 Param.channel.LOSMethod = '3GPP38901-probability'; % ['fresnel', '3GPP38901-probability']
