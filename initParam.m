@@ -11,7 +11,7 @@ Param.draw = 1;
 Param.storeTxData = 0;
 
 % Integer used to control the number of scheduling rounds (subframes) to simulate
-Param.schRounds = 10;
+Param.schRounds = 100000;
 Param.seed = 42;% Integer used for the simulation seed
 Param.mobilitySeed = 19; % Integer for randomizing user positioning and trajectories
 % Boolean to save a whole LTE frame for the macro eNodeB for testing
@@ -29,18 +29,21 @@ Param.numSubFramesPico = 6;% Integer used to set the number of RBs for a pico eN
 Param.numSubFramesUE = 25;% Integer used to set the number of RBs for the uplink
 Param.numMacro = 1;% Integer used to specify the number of macro eNodeBs in the scenario (currently only 1)
 Param.macroHeight = 35;% Double used to specify the height in metres of the macro eNodeBs
-Param.numMicro = 2;% Integer used to specify the number of micro eNodeBs in the scenario
-Param.microPos = 'uniform'; % Array of char to decide the positioning of the micro BS (uniform, random, clusterized)
-Param.microUniformRadius = 400;% Double radius of distance from centre for microBS in metres
+Param.numMicro = 9;% Integer used to specify the number of micro eNodeBs in the scenario (currently max 12 if hexagonal is chosen)
+Param.microPos = 'hexagonal'; % Array of char to decide the positioning of the micro BS (uniform, random, clusterized, hexagonal)
+Param.microUniformRadius = 200;% Double radius of distance from centre for microBS in metres
 Param.microHeight = 25;% Double used to specify the height in metres of the micro eNodeBs
-Param.numPico = 3;% Integer used to specify the number of pico eNodeBs in the scenario
+Param.numPico = 6;% Integer used to specify the number of pico eNodeBs in the scenario
+Param.numPicoPerSector = 2; %for single cell test and debugging
 Param.picoPos = 'uniform'; % Array of char to decide the positioning of the micro BS (uniform, random)
-Param.picoUniformRadius = 400;% Double radius of distance from centre for picoBS in metres
+Param.picoUniformRadius = 200;% Double radius of distance from centre for picoBS in metres
 Param.picoHeight = 5;% Double used to specify the height in metres of the pico eNodeBs
 Param.numEnodeBs = Param.numMacro + Param.numMicro + Param.numPico;
+Param.posScheme = 'Single Cell' % Array of char describing if a standard scheme/scenario should be used 
+				%['3GPP TR 38.901 UMa', '3GPP TR 38.901 RMa', 'ITU-R M.2412-0 5.B.C', 'ITU-R M2412-0 5.C.A', 'Single Cell'] leave empty for no scenario
 Param.ueHeight = 1.5;% Double used to specify the height in metres of the UEs
-Param.numUsers = 15;% Integer used for the number of UEs
-Param.mobilityScenario = 'pedestrian';% Integer to choose the mobility scenario (pedestrian, vehicular, static, superman, straight)
+Param.numUsers = 10;% Integer used for the number of UEs
+Param.mobilityScenario = 'pedestrian';% Integer to choose the mobility scenario (pedestrian, pedestrian-indoor, vehicular, static, superman, straight)
 Param.buildings = 'mobility/buildings.txt';% Path for loading the file with the buildings
 Param.mobilityStep = 0.01;
 Param.pucchFormat = 2;% PUCCH format (only 2 and 3 work)

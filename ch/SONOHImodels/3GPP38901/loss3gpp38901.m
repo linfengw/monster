@@ -17,11 +17,35 @@ function lossdB = loss3gpp38901(Scenario, d_2d, d_3d, f_c, h_bs, h_ut, h, W, LOS
 % h = average height of buildings
 % W = average width of roads
 % LOS = LOS or not.
-% shadowing = boolean for deciding if shadowing should be included.
-% base seed for shadowing
 
 c = physconst('LightSpeed');
-d_bp = 4*h_bs*h_ut*(f_c*10e9)/c;
+
+switch Scenario
+	case 'UMa'
+		if d_2d < 18
+			g = 0;
+		else
+			g = (5/4)*(d_2d/100)^3*exp(-d_2d/150);
+		end
+		
+		if h_ut < 13
+			h_e = 1;
+		else
+			h_e = 1/(1+((h_ut-13)^1.5/10)*g);
+		end
+		h_e_bs = h_bs - h_e;
+		h_e_ut = h_ut - h_e;
+		d_bp = 4*h_e_bs*h_e_ut*(f_c*10e8)/c;
+	case 'UMi'
+		h_e = 1;
+		h_e_bs = h_bs - h_e;
+		h_e_ut = h_ut - h_e;
+		d_bp = 4*h_e_bs*h_e_ut*(f_c*10e8)/c;
+	case 'RMa'
+		d_bp = 4*h_bs*h_ut*(f_c*10e8)/c;
+end
+
+
 %% Scenario RMa
 switch Scenario
 	case 'RMa'
@@ -132,11 +156,10 @@ switch Scenario
 			end
 		end
 	otherwise
-		error('Scenario not recognized.')
-		
-		
+		error('Scenario not recognized.')	
 		
 end
+
 
 end
 
