@@ -53,7 +53,7 @@ User.Rx.receiveDownlink(Station, ChannelEstimator.Downlink);
 fprintf("Subframe %i Downlink CQI: %i \n", subframe-1, User.Rx.CQI)
 downlink_cqi(subframe) = User.Rx.CQI;
 downlink_snr(subframe) = User.Rx.SNRdB;
-downlink_noiseest(subframe) = 10*log10(1/User.Rx.NoiseEst);
+downlink_noiseest(subframe) = 20*log10(1/User.Rx.NoiseEst);
 downlink_sinrs(subframe,:) = User.Rx.SINRS;
 %% Uplink
 User.Tx = User.Tx.mapGridAndModulate(User, Param);
@@ -79,7 +79,12 @@ testSubframe = lteSCFDMADemodulate(struct(User), Station.Rx.Waveform);
 
 end
 
-save(sprintf('DownlinkCQI_uplinkCSI_%im_%isubframes_300e-9deplaySpread_0doppler.mat',UserDistance,Param.schRounds),'downlink_cqi', 'downlink_noiseest','downlink_sinrs','downlink_snr','uplink_csi');
+save(sprintf('DownlinkCQI_uplinkCSI_%im_%isubframes_300e-9deplaySpread_0doppler.mat',UserDistance,Param.schRounds),'downlink_cqi', 'downlink_noiseest','downlink_sinrs','downlink_snr','uplink_csi', 'uplink_snr_calc');
+
+figure
+plot(uplink_noise_est, 1./(10.^(downlink_noiseest/20)),'-')
+xlabel('Estimated uplink \sigma^2')
+ylabel('Estimated downlink \sigma^2')
 
 figure
 subplot(2,1,1)
@@ -124,3 +129,5 @@ xlabel('Subframe #')
 ylabel('CQI downlink')
 ylim([0 16])
 
+
+figure
