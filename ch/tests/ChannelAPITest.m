@@ -126,12 +126,23 @@ classdef ChannelAPITest < matlab.unittest.TestCase
 					testCase.Stations(1).Users = struct('UeId', testCase.Users(1).NCellID, 'CQI', -1, 'RSSI', -1);
 					testCase.Users(1).ENodeBID = testCase.Stations(1).NCellID;
 
-					% Traverse channel downlink
-					testCase.Channel.traverse(testCase.Stations, testCase.Users, 'downlink')
-					testCase.verifyTrue(~isempty(testCase.ChannelModel.TempSignalVariables.RxWaveform))
-					testCase.verifyTrue(~isempty(testCase.ChannelModel.TempSignalVariables.RxWaveformInfo))
+					% Traverse channel downlink with no waveform assigned to
+					% transmitter
+					testCase.verifyError(@() 	testCase.Channel.traverse(testCase.Stations, testCase.Users, 'downlink'),'MonsterChannel:EmptyTxWaveformInfo')
 					
+					% Assign waveform and waveinfo to tx module
+					testCase.Stations(1).Tx.createReferenceSubframe();
+					testCase.Stations(1).Tx.assignReferenceSubframe();
+					testCase.Channel.traverse(testCase.Stations, testCase.Users, 'downlink')
+					testCase.verifyTrue(~isempty(testCase.Channel.ChannelModel.TempSignalVariables.RxWaveform))
+					testCase.verifyTrue(~isempty(testCase.Channel.ChannelModel.TempSignalVariables.RxWaveformInfo))
+
+					
+					% Check the assigned user have a received waveform
 					testCase.verifyTrue(~isempty(testCase.Users(1).Rx.Waveform))
+					testCase.verifyTrue(~isempty(testCase.Users(1).Rx.WaveformInfo))
+					testCase.verifyTrue(~isempty(testCase.Users(1).Rx.SNR))
+					testCase.verifyTrue(~isempty(testCase.Users(1).Rx.RxPwdBm))
 
 				end
 				
