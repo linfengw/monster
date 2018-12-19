@@ -5,7 +5,7 @@ Param.rmResults = 0;% Boolean to clean the results folder
 Param.logToFile = 0; % Boolean, if true all logs are re-directed to a file in /logs
 
 % Boolean used to enable the drawing of plots and other cool stuff
-Param.draw = 1;
+Param.draw = 0;
 
 % Booelan used to store the transmission data, that is each TB, codeword, waveform
 Param.storeTxData = 0;
@@ -27,7 +27,7 @@ Param.numSubFramesMacro = 50;% Integer used to set the number of RBs for a macro
 Param.numSubFramesMicro = 25;% Integer used to set the number of RBs for a micro eNodeB
 Param.numSubFramesPico = 6;% Integer used to set the number of RBs for a pico eNodeB
 Param.numSubFramesUE = 25;% Integer used to set the number of RBs for the uplink
-Param.numMacro = 1;% Integer used to specify the number of macro eNodeBs in the scenario (currently only 1)
+Param.numMacro = 3;% Integer used to specify the number of macro eNodeBs in the scenario (currently only 1)
 Param.macroHeight = 35;% Double used to specify the height in metres of the macro eNodeBs
 Param.numMicro = 0;% Integer used to specify the number of micro eNodeBs in the scenario (currently max 12 if hexagonal is chosen)
 Param.microPos = 'hexagonal'; % Array of char to decide the positioning of the micro BS (uniform, random, clusterized, hexagonal)
