@@ -7,7 +7,7 @@ classdef MonsterChannel < handle
 		BuildingFootprints;
 		ChannelModel;
 		enableFading;
-		enableInterference;
+		InterferenceType;
 		enableShadowing;
 		LOSMethod;
 		iRound = 0;
@@ -18,7 +18,7 @@ classdef MonsterChannel < handle
 			obj.Mode = Param.channel.mode;
 			obj.Region = Param.channel.region;
 			obj.enableFading = Param.channel.enableFading;
-			obj.enableInterference = Param.channel.enableInterference;
+			obj.InterferenceType = Param.channel.InterferenceType;
 			obj.enableShadowing = Param.channel.enableShadowing;
 			obj.BuildingFootprints = Param.buildings;
 			obj.LOSMethod = Param.channel.LOSMethod;

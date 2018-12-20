@@ -79,7 +79,7 @@ classdef ueReceiverModule < handle
 		function obj = set.SINR(obj,SINR,stationID)
 			% SINR given linear
 			obj.SINR = SINR;
-			obj.SINRdB = 10*log10(SINR);
+			obj.SINRdB = 20*log10(SINR);
 			
 		end
 		

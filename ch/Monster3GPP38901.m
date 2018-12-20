@@ -48,12 +48,17 @@ classdef Monster3GPP38901 < handle
 				
 				% Calculate recieved power between station and user
 				receivedPower = obj.computeLinkBudget(station, user, Mode);
+				receivedPowerWatt = 10^((receivedPower-30)/10);
 				obj.TempSignalVariables.RxPower = receivedPower;
 
 				% Calculate SNR using thermal noise
-				[SNR, SNRdB] = obj.computeSNR();
+				[SNR, SNRdB, noisePower] = obj.computeSNR();
 				obj.TempSignalVariables.RxSNR = SNR;
 				obj.TempSignalVariables.RxSNRdB = SNRdB;
+
+				% Add/compute interference
+				SINR = obj.computeSINR(station, user, Stations, receivedPowerWatt, noisePower, Mode);
+				obj.TempSignalVariables.RxSINR = SINR;
 
 				% Compute N0
 				N0 = obj.computeSpectralNoiseDensity(station, Mode);
@@ -78,28 +83,66 @@ classdef Monster3GPP38901 < handle
 				
 			end
 		end
-
 		
 		function N0 = computeSpectralNoiseDensity(obj, Station, Mode)
 			% Compute spectral noise density NO
 			switch Mode
 			case 'downlink'
 				Es = sqrt(2.0*Station.CellRefP*double(obj.TempSignalVariables.RxWaveformInfo.Nfft));
-				N0 = 1/(Es*obj.TempSignalVariables.RxSNR);
+				N0 = 1/(Es*obj.TempSignalVariables.RxSINR);
 			case 'uplink'
-				N0 = 1/(obj.TempSignalVariables.RxSNR * sqrt(double(obj.TempSignalVariables.RxWaveformInfo.Nfft)))/sqrt(2);
+				N0 = 1/(obj.TempSignalVariables.RxSINR * sqrt(double(obj.TempSignalVariables.RxWaveformInfo.Nfft)))/sqrt(2);
 			end
 
 		end 
 
-
-		function [SNR, SNRdB] = computeSNR(obj)
+		function [SNR, SNRdB, noise] = computeSNR(obj)
 			% Calculate SNR using thermal noise. Thermal noise is bandwidth dependent.
 			thermalLossdBm = obj.thermalLoss();
 			rxNoiseFloor = thermalLossdBm;
+			noise = 10^((rxNoiseFloor-30)/10);
 			SNRdB = obj.TempSignalVariables.RxPower-rxNoiseFloor;
 			SNR = 10^((SNRdB)/20);
 		end
+
+		function [SINR] = computeSINR(obj, station, user, Stations, receivedPowerWatt, noisePower, Mode)
+			% Compute SINR using received power and the noise power.
+			% Interference is given as the power of the received signal, given the power of the associated base station, over the power of the neighboring base stations.
+			% 
+			% v1. InterferenceType Full assumes full power, thus the SINR computation can be done using just the link budget.
+			% TODO: Add waveform type interference. 
+			% TODO: clean up function arguments.
+			if strcmp(obj.Channel.InterferenceType,'Full')
+				interferingStations = Stations(find(strcmp({Stations.BsClass},station.BsClass)));
+				interferingStations = interferingStations([interferingStations.NCellID]~=station.NCellID);
+				listCellPower = obj.listCellPower(user, interferingStations, Mode);
+				
+				intStations  = fieldnames(listCellPower);
+				intPower = 0;
+				% Sum power from interfering stations
+				for intStation = 1:length(fieldnames(listCellPower))
+					intPower =+ listCellPower.(intStations{intStation}).receivedPowerWatt;
+				end
+
+				SINR = receivedPowerWatt / (intPower + noisePower);
+			else
+				SINR = obj.TempSignalVariables.RxSNR;
+			end
+		end
+
+		function list = listCellPower(obj, User, Stations, Mode)
+			% Get list of recieved power from all stations
+
+			list = struct();
+			for iStation = 1:length(Stations)
+				station = Stations(iStation);
+				stationStr = sprintf('stationNCellID%i',station.NCellID);
+				list.(stationStr).receivedPowerdBm = obj.computeLinkBudget(station, User, Mode);
+				list.(stationStr).receivedPowerWatt = 10^((list.(stationStr).receivedPowerdBm-30)/10);
+			end
+			
+		end
+
 
 		
 		function receivedPower = computeLinkBudget(obj, Station, User, mode)
@@ -302,6 +345,7 @@ classdef Monster3GPP38901 < handle
 				RxNode.Rx.WaveformInfo =  obj.TempSignalVariables.RxWaveformInfo;
 				RxNode.Rx.RxPwdBm = obj.TempSignalVariables.RxPower;
 				RxNode.Rx.SNR = obj.TempSignalVariables.RxSNR;
+				RxNode.Rx.SINR = obj.TempSignalVariables.RxSINR;
 				RxNode.Rx.PathGains = obj.TempSignalVariables.RxPathGains;
 				RxNode.Rx.PathFilters = obj.TempSignalVariables.RxPathFilters;
 			end
@@ -314,6 +358,7 @@ classdef Monster3GPP38901 < handle
 			% The property TempSignalVariables is used, and is a struct of several parameters.
 			obj.TempSignalVariables.RxPower = [];
 			obj.TempSignalVariables.RxSNR = [];
+			obj.TempSignalVariables.RxSINR = [];
 			obj.TempSignalVariables.RxWaveform = [];
 			obj.TempSignalVariables.RxWaveformInfo = [];
 			obj.TempSignalVariables.RxPathGains = [];
@@ -497,6 +542,7 @@ classdef Monster3GPP38901 < handle
 				LOS = 1;
 			end
 			
+			
 			if nargout > 1
 				varargout{1} = prop;
 				varargout{2} = x;
@@ -506,6 +552,8 @@ classdef Monster3GPP38901 < handle
 		end
 		
 	end
+	
+	
 	
 	
 end

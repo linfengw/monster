@@ -7,6 +7,7 @@ classdef ChannelAPITest < matlab.unittest.TestCase
 			ChannelModel
 			ChannelNoSF;
 			ChannelNoSFModel;
+			ChannelNoInterference;
 			Param
 			Stations
 			Users;
@@ -27,9 +28,17 @@ classdef ChannelAPITest < matlab.unittest.TestCase
 				testCase.Channel = MonsterChannel(Stations, Users, Param);
 				testCase.ChannelModel = testCase.Channel.ChannelModel;
 				testCase.SFplot = testCase.ChannelModel.plotSFMap(Stations(1));
+
+				% Channel with no shadowing
 				Param.channel.enableShadowing = 0;
 				testCase.ChannelNoSF = MonsterChannel(Stations, Users, Param);
 				testCase.ChannelNoSFModel = testCase.ChannelNoSF.ChannelModel;
+
+				% Channel with no interference
+				Param.channel.enableShadowing = 1;
+				Param.channel.InterferenceType = 'None';
+				testCase.ChannelNoInterference = MonsterChannel(Stations, Users, Param);
+
 			end
 
 		end
@@ -137,14 +146,40 @@ classdef ChannelAPITest < matlab.unittest.TestCase
 					testCase.verifyTrue(~isempty(testCase.Channel.ChannelModel.TempSignalVariables.RxWaveform))
 					testCase.verifyTrue(~isempty(testCase.Channel.ChannelModel.TempSignalVariables.RxWaveformInfo))
 
-					
+
 					% Check the assigned user have a received waveform
 					testCase.verifyTrue(~isempty(testCase.Users(1).Rx.Waveform))
 					testCase.verifyTrue(~isempty(testCase.Users(1).Rx.WaveformInfo))
 					testCase.verifyTrue(~isempty(testCase.Users(1).Rx.SNR))
 					testCase.verifyTrue(~isempty(testCase.Users(1).Rx.RxPwdBm))
+					testCase.verifyTrue(~isempty(testCase.Users(1).Rx.SINR))
+				
+				end
 
+				function testNoInterference(testCase)
+
+					% Assign user
+					testCase.Stations(1).Users = struct('UeId', testCase.Users(1).NCellID, 'CQI', -1, 'RSSI', -1);
+					testCase.Users(1).ENodeBID = testCase.Stations(1).NCellID;
+
+					% Assign waveform and waveinfo to tx module
+					testCase.Stations(1).Tx.createReferenceSubframe();
+					testCase.Stations(1).Tx.assignReferenceSubframe();
+					testCase.ChannelNoInterference.traverse(testCase.Stations, testCase.Users, 'downlink')
+
+					% Check the assigned user have a received waveform and that SNR equals SINR
+					testCase.verifyTrue(~isempty(testCase.Users(1).Rx.Waveform))
+					testCase.verifyTrue(~isempty(testCase.Users(1).Rx.WaveformInfo))
+					testCase.verifyTrue(~isempty(testCase.Users(1).Rx.SNR))
+					testCase.verifyTrue(~isempty(testCase.Users(1).Rx.RxPwdBm))
+					testCase.verifyEqual(testCase.Users(1).Rx.SINR, testCase.Users(1).Rx.SNR)
+					testCase.verifyEqual(testCase.Users(1).Rx.SINRdB, testCase.Users(1).Rx.SNRdB)
+				
 				end
 				
-    end
+				
+				
+				
+				
+		end
 end
