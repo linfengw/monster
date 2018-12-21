@@ -135,7 +135,7 @@ classdef SonohiChannel < handle
 		
 		
 		function area = getAreaSize(obj)
-			extraSamples = 5000; % Extra samples for allowing interpolation. Error will be thrown in this is exceeded.
+			extraSamples = 20000; % Extra samples for allowing interpolation. Error will be thrown in this is exceeded.
 			area = (max(obj.BuildingFootprints(:,3)) - min(obj.BuildingFootprints(:,1))) + extraSamples;
 		end
 		
@@ -590,7 +590,7 @@ classdef SonohiChannel < handle
 		end
 		
 		function seed = getLinkSeed(obj, rxObj)
-			seed = obj.Seed+10*obj.iRound^2+5*rxObj.NCellID^2;
+			seed = obj.Seed+10*obj.iRound^2+5*rxObj.Seed^2;
 		end
 		
 		function simTime = getSimTime(obj)

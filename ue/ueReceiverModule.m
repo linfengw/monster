@@ -36,6 +36,7 @@ classdef ueReceiverModule < handle
 		HistoryStats;
 		Demod;
         ChannelConditions = struct(); % Storage of channel conditions
+				AzimuthAngle;
 	end
 
 	properties (Access = private)

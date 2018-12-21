@@ -18,7 +18,7 @@ Param.mobilitySeed = 19; % Integer for randomizing user positioning and trajecto
 Param.saveFrame = 1;
 
 %% Draw functions
-Param.generateHeatMap = 0;% Boolean to control the generation of a heatmap of the pathloos in the scenario
+Param.generateHeatMap = 1;% Boolean to control the generation of a heatmap of the pathloos in the scenario
 Param.heatMapType = 'perStation';% String to control the type of heatmap
 Param.heatMapRes = 10;% Heatmap resoultion in metres
 
@@ -75,6 +75,7 @@ Param.prbSym = 160;% Integer used for the number of OFMD symbols in a RB
 Param.ueNoiseFigure = 7;% Double used for the UE noise figure in dB
 Param.eNBNoiseFigure = 7;% Double used for the BS noise figure in dB
 Param.eNBGain = 0; %Antenna gain of the eNB.
+Param.eNBAntennaType = 'Omni'; % ['3GPP38901', 'Omni']
 Param.prbRe = 168;% Integer used for the number of RE in a RB
 Param.PRACHInterval = 10; %Given as the number of subframes between each PRACH.
 %% Channel configuration

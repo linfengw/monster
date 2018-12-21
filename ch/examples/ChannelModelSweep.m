@@ -5,10 +5,11 @@ clear all
 close all
 load('SimulationParameters.mat');
 Param.numMacro = 1;
-Param.numMicro = 0;
+Param.numMicro = 1;
 Param.numPico = 0;
 Param.numUsers = 1;
-Param.draw = 0;
+Param.draw = 1;
+Param.eNBAntennaType ='Omni'; % ['3GPP38901', 'Omni']
 
 
 if Param.draw
@@ -28,6 +29,9 @@ Param.channel.LOSMethod = '3GPP38901-probability';
 Param.channel.modeDL = '3GPP38901';
 Param.channel.region = struct();
 Param.channel.region.macroScenario = 'UMa';
+Param.channel.region.microScenario = 'UMi';
+Param.channel.region.picoScenario ='UMi'
+
 Param.mobilityScenario = 'pedestrian';
 ChannelUMa = ChBulk_v2(Station, User, Param);
 
@@ -37,15 +41,15 @@ ChannelUMi = ChBulk_v2(Station, User, Param);
 Param.channel.region.macroScenario = 'RMa';
 ChannelRMa = ChBulk_v2(Station, User, Param);
 
-Param.channel.LOSMethod = 'fresnel';
-Param.channel.region = 'Dense Urban';
-Param.channel.modeDL = 'ITU1546';
-Param.channel.enableShadowing = false;
-ChITUDenseUrban = ChBulk_v2(Station, User, Param);
+%Param.channel.LOSMethod = 'fresnel';
+%Param.channel.region = 'Dense Urban';
+%Param.channel.modeDL = 'ITU1546';
+%Param.channel.enableShadowing = false;
+%ChITUDenseUrban = ChBulk_v2(Station, User, Param);
 
-Param.channel.modeDL = 'ITU1546';
-Param.channel.region = 'Urban';
-ChITUUrban = ChBulk_v2(Station, User, Param);
+%Param.channel.modeDL = 'ITU1546';
+%Param.channel.region = 'Urban';
+%ChITUUrban = ChBulk_v2(Station, User, Param);
 
 %Param.channel.modeDL = 'winner';
 %Param.channel.region = struct();
@@ -84,16 +88,16 @@ for distanceIdx = 1:N
 	[~, ueUMa] = ChannelUMa.traverse(bs,ue,'downlink');
 	[~, ueUMi] = ChannelUMi.traverse(bs,ue,'downlink');
 	[~, ueRMa] = ChannelRMa.traverse(bs,ue,'downlink');
-	[~, ueITUDU] = ChITUDenseUrban.traverse(bs, ue, 'downlink');
-	[~, ueITUU] = ChITUUrban.traverse(bs, ue, 'downlink');
+% 	[~, ueITUDU] = ChITUDenseUrban.traverse(bs, ue, 'downlink');
+% 	[~, ueITUU] = ChITUUrban.traverse(bs, ue, 'downlink');
 	%[~, ueWINNER] = ChWINNER.traverse(bs, ue, 'downlink');
 
 	% Get offset
 	ueUMa.Rx.Offset = lteDLFrameOffset(bs, ueUMa.Rx.Waveform);
 	ueUMi.Rx.Offset = lteDLFrameOffset(bs, ueUMi.Rx.Waveform);
 	ueRMa.Rx.Offset = lteDLFrameOffset(bs, ueRMa.Rx.Waveform);
-	ueITUDU.Rx.Offset = lteDLFrameOffset(bs, ueITUDU.Rx.Waveform);
-	ueITUU.Rx.Offset = lteDLFrameOffset(bs, ueITUU.Rx.Waveform);
+% 	ueITUDU.Rx.Offset = lteDLFrameOffset(bs, ueITUDU.Rx.Waveform);
+% 	ueITUU.Rx.Offset = lteDLFrameOffset(bs, ueITUU.Rx.Waveform);
 	%ueWINNER.Rx.Offset = lteDLFrameOffset(bs, ueWINNER.Rx.Waveform);
 	
 	
@@ -102,8 +106,8 @@ for distanceIdx = 1:N
 	ueUMa.Rx.Waveform = ueUMa.Rx.Waveform(1+ueUMa.Rx.Offset:end);
 	ueUMi.Rx.Waveform = ueUMi.Rx.Waveform(1+ueUMi.Rx.Offset:end);
 	ueRMa.Rx.Waveform = ueRMa.Rx.Waveform(1+ueRMa.Rx.Offset:end);
-	ueITUDU.Rx.Waveform = ueITUDU.Rx.Waveform(1+ueITUDU.Rx.Offset:end);
-	ueITUU.Rx = ueITUU.Rx.applyOffset();
+% 	ueITUDU.Rx.Waveform = ueITUDU.Rx.Waveform(1+ueITUDU.Rx.Offset:end);
+% 	ueITUU.Rx = ueITUU.Rx.applyOffset();
 	%ueWINNER.Rx = ueWINNER.Rx.applyOffset();
 
 	% UE reference measurements
@@ -119,13 +123,13 @@ for distanceIdx = 1:N
 	resultsRMa(distanceIdx,1) = ueRMa.Rx.SNRdB;
 	resultsRMa(distanceIdx,2) = ueRMa.Rx.RxPwdBm;
 	
-	ueITUDU.Rx = ueITUDU.Rx.referenceMeasurements(bs);
-	resultsITUDenseUrban(distanceIdx,1) = ueITUDU.Rx.SNRdB;
-	resultsITUDenseUrban(distanceIdx,2) = ueITUDU.Rx.RxPwdBm;
-		
-	ueITUU.Rx = ueITUU.Rx.referenceMeasurements(bs);
-	resultsITUUrban(distanceIdx,1) = ueITUU.Rx.SNRdB;
-	resultsITUUrban(distanceIdx,2) = ueITUU.Rx.RxPwdBm;
+% 	ueITUDU.Rx = ueITUDU.Rx.referenceMeasurements(bs);
+% 	resultsITUDenseUrban(distanceIdx,1) = ueITUDU.Rx.SNRdB;
+% 	resultsITUDenseUrban(distanceIdx,2) = ueITUDU.Rx.RxPwdBm;
+% 		
+% 	ueITUU.Rx = ueITUU.Rx.referenceMeasurements(bs);
+% 	resultsITUUrban(distanceIdx,1) = ueITUU.Rx.SNRdB;
+% 	resultsITUUrban(distanceIdx,2) = ueITUU.Rx.RxPwdBm;
 	
 			
 	%ueWINNER.Rx = ueWINNER.Rx.referenceMeasurements(bs);
@@ -137,7 +141,7 @@ plot(distanceTotal, resultsUMa(:,2));
 hold on
 plot(distanceTotal, resultsUMi(:,2));
 plot(distanceTotal, resultsRMa(:,2));
-plot(distanceTotal, resultsITUDenseUrban(:,2));
-plot(distanceTotal, resultsITUUrban(:,2));
+% plot(distanceTotal, resultsITUDenseUrban(:,2));
+% plot(distanceTotal, resultsITUUrban(:,2));
 %plot(distanceTotal, resultsWINNER(:,2));
 legend('UMa','UMi','RMa','ITU Dense Urban', 'ITU Urban', 'WINNER Urban');

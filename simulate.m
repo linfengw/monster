@@ -31,7 +31,8 @@ if Param.generateHeatMap
 		case 'perClass'
 			HeatMap = generateHeatMapClass(Stations, Channel, Param);
 		case 'perStation'
-			HeatMap = generateHeatmap(Stations, Channel, Param);
+			ue = UserEquipment(Param, 99);
+			Channel.plotHeatmap(Stations,ue, Param.LayoutAxes(2));
 		otherwise
 			sonohilog('Unknown heatMapType selected in simulation parameters', 'ERR')
 	end
@@ -105,7 +106,7 @@ for iRound = 0:(Param.schRounds-1)
   % Draw scheduled links
   % ------------------------
   if Param.draw
-    plotlinks(Users, Stations, Param.LayoutAxes, 'downlink')
+    plotlinks(Users, Stations, Param.LayoutAxes(6), 'downlink')
   end
   
 	

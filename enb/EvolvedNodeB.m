@@ -64,7 +64,7 @@ classdef EvolvedNodeB < matlab.mixin.Copyable
 					obj.Psleep = 75; % W
 				case 'micro'
 					obj.NDLRB = Param.numSubFramesMicro;
-					obj.Pmax = 6.3; % W
+					obj.Pmax = 1; % W originally 6.3
 					obj.P0 = 56; % W
 					obj.DeltaP = 2.6;
 					obj.Psleep = 39.0; % W
@@ -360,6 +360,12 @@ classdef EvolvedNodeB < matlab.mixin.Copyable
 			% Reset the receiver
 			obj.Rx = obj.Rx.reset();
 			
+		end
+		
+		function obj = scheduleSingleUserDownlink(obj, user)
+			obj.resetScheduleDL()
+			obj.Users = struct('UeId', user.NCellID, 'CQI', -1, 'RSSI', -1);
+			obj.ScheduleDL(1,1).UeId = user.NCellID;
 		end
 		
 	end

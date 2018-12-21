@@ -32,7 +32,7 @@ for stationIdx = 1:length(stations)
     else 
         color = [0.2, 0.6, 0, 0.05];
     end
-    hCoverage = rectangle(param.LayoutAxes,'Position', [px py d d], 'Curvature', [1,1],'FaceColor',color,'EdgeColor','none','Tag',strcat('coverage',num2str(stationIdx)));
+    hCoverage = rectangle(param.LayoutAxes(1),'Position', [px py d d], 'Curvature', [1,1],'FaceColor',color,'EdgeColor','none','Tag',strcat('coverage',num2str(stationIdx)));
     uistack(hCoverage,'bottom')
 end
 drawnow
