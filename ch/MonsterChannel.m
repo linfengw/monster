@@ -11,6 +11,7 @@ classdef MonsterChannel < handle
 		enableShadowing;
 		LOSMethod;
 		iRound = 0;
+		extraSamplesArea = 500;
 	end
 
 	methods 
@@ -86,43 +87,46 @@ classdef MonsterChannel < handle
 			end
 		end
 
-		function h = plotSINR(obj, Stations, selectedStation, User)
-			% If Station is a list, max SINR is plotted for every point
-			% Otherwise, if it's a single station SINR is computed with all other stations in the same class as interferes
+		function [SINRmap, SNRmap, axis] = SignalQualityMap(obj, Stations, selectedStation, User, Resolution)
+			% If selectedStation is a list, the matrix returned is for each station.
 
-			% Loop X and Y for X x Y Matrix
-			areaSize = 800;
-			resolution = 10;
-			X = 1:resolution:areaSize;
-			Y = 1:resolution:areaSize;
-			SINR = nan(length(X),length(Y));
-			SNR = nan(length(X),length(Y));
+			
+			areaSize = obj.getAreaSize;
+			X = -areaSize:Resolution:areaSize;
+			Y = -areaSize:Resolution:areaSize;
+			axis = [X; Y];
+			SINRmap = nan(length(X),length(Y));
+			SNRmap = nan(length(X),length(Y));
+
 			% Add reference subframe for BW indicator
-			selectedStation.Tx.createReferenceSubframe();
-			selectedStation.Tx.assignReferenceSubframe();
-			interferingStations = obj.getInterferingStations(selectedStation, Stations);
+			selectedStationCopy = copy(selectedStation);
+			selectedStationCopy.Tx.createReferenceSubframe();
+			selectedStationCopy.Tx.assignReferenceSubframe();
 			for x = 1:length(X)
-				parfor y = 1:length(Y)
+				for y = 1:length(Y)
 					user = copy(User);
 					user.Position(1:2) = [X(x), Y(y)];
-					try
-					[SNR(y, x), SINR(y, x)] = obj.ChannelModel.getSNRandSINR(Stations, selectedStation, user);
-					catch
-						
-					end
-					sonohilog(sprintf(' %i/%i - %i/%i ', X(x), areaSize, Y(y), areaSize))
+					[SNRmap(y, x), SINRmap(y, x)] = obj.ChannelModel.getSNRandSINR(Stations, selectedStationCopy, user);
 				end
+			end
+		end
+
+		function h = plotSINR(obj, Stations, User, Resolution)
+			sonohilog('Computing SINR map...')
+			for iStation = 1:length(Stations)
+				selectedStation = Stations(iStation);
+				[SINRmap(:,:,iStation), SNRmap(:,:,iStation), axis] = obj.SignalQualityMap(Stations, selectedStation, User, Resolution);
 			end
 			
 			
-			
-			h = figure
-			contourf(X,Y,20*log10(SINR))
+			h = figure;
+			contourf(axis(1,:),axis(2,:),20*log10(max(SINRmap,[],3)))
 			colorbar()
+			xlabel('X [meters]')
+			ylabel('Y [meters]')
 			hold on
-			plot(selectedStation.Position(1),selectedStation.Position(2),'o','MarkerSize',10,'MarkerFaceColor','g')
-			for iStation = 1:length(interferingStations)
-				plot(interferingStations(iStation).Position(1), interferingStations(iStation).Position(2), 'o', 'MarkerSize', 10, 'MarkerFaceColor', 'r')
+			for iStation = 1:length(Stations)
+				plot(Stations(iStation).Position(1), Stations(iStation).Position(2), 'o', 'MarkerSize', 10, 'MarkerFaceColor', 'r')
 			end
 			
 			
@@ -132,8 +136,8 @@ classdef MonsterChannel < handle
 
 		
 		function area = getAreaSize(obj)
-			extraSamples = 5000; % Extra samples for allowing interpolation. Error will be thrown in this is exceeded.
-			area = (max(obj.BuildingFootprints(:,3)) - min(obj.BuildingFootprints(:,1))) + extraSamples;
+			 % Extra samples for allowing interpolation. Error will be thrown in this is exceeded.
+			area = (max(obj.BuildingFootprints(:,3)) - min(obj.BuildingFootprints(:,1))) + obj.extraSamplesArea;
 		end
 
 

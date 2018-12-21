@@ -14,7 +14,7 @@ classdef ChannelAPITest < matlab.unittest.TestCase
 			SFplot
 		end
 
-		methods (TestMethodSetup)
+		methods (TestClassSetup)
 		
 			function createChannel(testCase)
 
@@ -35,7 +35,6 @@ classdef ChannelAPITest < matlab.unittest.TestCase
 				Param.channel.LOSMethod = 'NLOS';
 				testCase.ChannelNoSF = MonsterChannel(Stations, Users, Param);
 				testCase.ChannelNoSFModel = testCase.ChannelNoSF.ChannelModel;
-				testCase.SINRplot = testCase.ChannelNoSF.plotSINR(Stations, Stations(1), Users(1));
 
 				% Channel with no interference
 				Param.channel.enableShadowing = 1;
@@ -46,11 +45,12 @@ classdef ChannelAPITest < matlab.unittest.TestCase
 
 		end
 		
-		methods (TestMethodTeardown)
+		methods (TestClassTeardown)
 		
-			function closePlots(testCase)
-				close(testCase.SFplot)
-			end
+			% function closePlots(testCase)
+			% 	close(testCase.SFplot)
+			% 	close(testCase.SINRplot)
+			% end
 
 		end
     
@@ -60,6 +60,11 @@ classdef ChannelAPITest < matlab.unittest.TestCase
         %% Test Function
         function testConstructor(testCase)
             testCase.verifyTrue(isa(testCase.Channel,'MonsterChannel'))
+				end
+
+				 function testSINRplot(testCase)
+				 	SINRplot = testCase.ChannelNoSF.plotSINR(testCase.Stations, testCase.Users(1), 150);
+				 	close(SINRplot)
 				end
 
 				function testChannelModel(testCase)
@@ -137,10 +142,13 @@ classdef ChannelAPITest < matlab.unittest.TestCase
 					% Assign user
 					testCase.Stations(1).Users = struct('UeId', testCase.Users(1).NCellID, 'CQI', -1, 'RSSI', -1);
 					testCase.Users(1).ENodeBID = testCase.Stations(1).NCellID;
+					
+					testCase.Stations(1).Tx.Waveform = [];
+					testCase.Stations(1).Tx.WaveformInfo = [];
 
 					% Traverse channel downlink with no waveform assigned to
 					% transmitter
-					testCase.verifyError(@() 	testCase.Channel.traverse(testCase.Stations, testCase.Users, 'downlink'),'MonsterChannel:EmptyTxWaveformInfo')
+					testCase.verifyError(@() 	testCase.Channel.traverse(testCase.Stations, testCase.Users, 'downlink'),'MonsterChannel:EmptyTxWaveform')
 					
 					% Assign waveform and waveinfo to tx module
 					testCase.Stations(1).Tx.createReferenceSubframe();

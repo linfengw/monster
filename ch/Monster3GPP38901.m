@@ -213,11 +213,11 @@ classdef Monster3GPP38901 < handle
 			avgStreetWidth = obj.Channel.BuildingFootprints(2,2)-obj.Channel.BuildingFootprints(1,4);
 			try
 			lossdB = loss3gpp38901(areatype, distance2d, distance3d, f, hBs, hUt, avgBuilding, avgStreetWidth, LOS);
-			catch
-			if strcmp(ME.identifier,'Pathloss3GPP:Range')
-					minRange = 10;
-					lossdB = loss3gpp38901(areatype, minRange, distance3d, f, hBs, hUt, avgBuilding, avgStreetWidth, LOS);
-			end
+			catch ME
+				if strcmp(ME.identifier,'Pathloss3GPP:Range')
+						minRange = 10;
+						lossdB = loss3gpp38901(areatype, minRange, distance3d, f, hBs, hUt, avgBuilding, avgStreetWidth, LOS);
+				end
 			end
 				
 			RxNode.Rx.ChannelConditions.BaseLoss = lossdB;
