@@ -28,11 +28,14 @@ classdef ChannelAPITest < matlab.unittest.TestCase
 				testCase.Channel = MonsterChannel(Stations, Users, Param);
 				testCase.ChannelModel = testCase.Channel.ChannelModel;
 				testCase.SFplot = testCase.ChannelModel.plotSFMap(Stations(1));
+				%testCase.SINRplot = testCase.Channel.plotSINR(Stations, Stations(1), Users(1));
 
 				% Channel with no shadowing
 				Param.channel.enableShadowing = 0;
+				Param.channel.LOSMethod = 'NLOS';
 				testCase.ChannelNoSF = MonsterChannel(Stations, Users, Param);
 				testCase.ChannelNoSFModel = testCase.ChannelNoSF.ChannelModel;
+				testCase.SINRplot = testCase.ChannelNoSF.plotSINR(Stations, Stations(1), Users(1));
 
 				% Channel with no interference
 				Param.channel.enableShadowing = 1;
@@ -153,11 +156,55 @@ classdef ChannelAPITest < matlab.unittest.TestCase
 					testCase.verifyTrue(~isempty(testCase.Users(1).Rx.SNR))
 					testCase.verifyTrue(~isempty(testCase.Users(1).Rx.RxPwdBm))
 					testCase.verifyTrue(~isempty(testCase.Users(1).Rx.SINR))
+					testCase.verifyTrue(testCase.Users(1).Rx.SINR < testCase.Users(1).Rx.SNR)
+					testCase.verifyTrue(testCase.Users(1).Rx.SINRdB < testCase.Users(1).Rx.SNRdB)
+					
+					
+					% Check the other users have nothing
+					testCase.verifyTrue(isempty(testCase.Users(2).Rx.Waveform))
+					testCase.verifyTrue(isempty(testCase.Users(2).Rx.WaveformInfo))
+					testCase.verifyTrue(isempty(testCase.Users(2).Rx.SNR))
+					testCase.verifyTrue(isempty(testCase.Users(2).Rx.RxPwdBm))
+					testCase.verifyTrue(isempty(testCase.Users(2).Rx.SINR))
 				
 				end
+				
+			   function testTraverseUplink(testCase)
+
+					% Assign user
+					testCase.Stations(1).Users = struct('UeId', testCase.Users(1).NCellID, 'CQI', -1, 'RSSI', -1);
+					testCase.Users(1).ENodeBID = testCase.Stations(1).NCellID;
+
+					% Traverse channel downlink with no waveform assigned to
+					% transmitter
+					testCase.verifyError(@() 	testCase.Channel.traverse(testCase.Stations, testCase.Users, 'uplink'),'MonsterChannel:EmptyTxWaveform')
+					
+					% Assign waveform and waveinfo to tx module
+					% Uplink
+					testCase.Users(1).Tx = testCase.Users(1).Tx.mapGridAndModulate(testCase.Users(1), testCase.Param);
+					testCase.Stations(1).setScheduleUL(testCase.Param);
+					testCase.Channel.traverse(testCase.Stations, testCase.Users, 'uplink')
+					testCase.verifyTrue(~isempty(testCase.Channel.ChannelModel.TempSignalVariables.RxWaveform))
+					testCase.verifyTrue(~isempty(testCase.Channel.ChannelModel.TempSignalVariables.RxWaveformInfo))
+
+
+					% Check the assigned station of the user have a received waveform
+					testCase.verifyTrue(~isempty(testCase.Stations(1).Rx.ReceivedSignals{1}.Waveform))
+					testCase.verifyTrue(~isempty(testCase.Stations(1).Rx.ReceivedSignals{1}.WaveformInfo))
+					testCase.verifyTrue(~isempty(testCase.Stations(1).Rx.ReceivedSignals{1}.SNR))
+					testCase.verifyTrue(~isempty(testCase.Stations(1).Rx.ReceivedSignals{1}.RxPwdBm))
+					testCase.verifyTrue(isempty(testCase.Stations(1).Rx.ReceivedSignals{2}))
+					
+					% Combine received signals into one final waveform.
+					testCase.Stations(1).Rx.createReceivedSignal();
+					% Final waveform is the waveform the only user in uplink with the
+					% received power set.
+					testCase.verifyEqual(testCase.Stations(1).Rx.Waveform, setPower(testCase.Stations(1).Rx.ReceivedSignals{1}.Waveform, testCase.Stations(1).Rx.ReceivedSignals{1}.RxPwdBm))
+
+				end
+				
 
 				function testNoInterference(testCase)
-
 					% Assign user
 					testCase.Stations(1).Users = struct('UeId', testCase.Users(1).NCellID, 'CQI', -1, 'RSSI', -1);
 					testCase.Users(1).ENodeBID = testCase.Stations(1).NCellID;
@@ -174,7 +221,6 @@ classdef ChannelAPITest < matlab.unittest.TestCase
 					testCase.verifyTrue(~isempty(testCase.Users(1).Rx.RxPwdBm))
 					testCase.verifyEqual(testCase.Users(1).Rx.SINR, testCase.Users(1).Rx.SNR)
 					testCase.verifyEqual(testCase.Users(1).Rx.SINRdB, testCase.Users(1).Rx.SNRdB)
-				
 				end
 				
 				

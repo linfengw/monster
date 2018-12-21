@@ -86,6 +86,48 @@ classdef MonsterChannel < handle
 			end
 		end
 
+		function h = plotSINR(obj, Stations, selectedStation, User)
+			% If Station is a list, max SINR is plotted for every point
+			% Otherwise, if it's a single station SINR is computed with all other stations in the same class as interferes
+
+			% Loop X and Y for X x Y Matrix
+			areaSize = 800;
+			resolution = 10;
+			X = 1:resolution:areaSize;
+			Y = 1:resolution:areaSize;
+			SINR = nan(length(X),length(Y));
+			SNR = nan(length(X),length(Y));
+			% Add reference subframe for BW indicator
+			selectedStation.Tx.createReferenceSubframe();
+			selectedStation.Tx.assignReferenceSubframe();
+			interferingStations = obj.getInterferingStations(selectedStation, Stations);
+			for x = 1:length(X)
+				parfor y = 1:length(Y)
+					user = copy(User);
+					user.Position(1:2) = [X(x), Y(y)];
+					try
+					[SNR(y, x), SINR(y, x)] = obj.ChannelModel.getSNRandSINR(Stations, selectedStation, user);
+					catch
+						
+					end
+					sonohilog(sprintf(' %i/%i - %i/%i ', X(x), areaSize, Y(y), areaSize))
+				end
+			end
+			
+			
+			
+			h = figure
+			contourf(X,Y,20*log10(SINR))
+			colorbar()
+			hold on
+			plot(selectedStation.Position(1),selectedStation.Position(2),'o','MarkerSize',10,'MarkerFaceColor','g')
+			for iStation = 1:length(interferingStations)
+				plot(interferingStations(iStation).Position(1), interferingStations(iStation).Position(2), 'o', 'MarkerSize', 10, 'MarkerFaceColor', 'r')
+			end
+			
+			
+		end
+
 		
 
 		
@@ -288,7 +330,10 @@ classdef MonsterChannel < handle
 
 	methods(Static)
 		
-		
+		function interferingStations = getInterferingStations(SelectedStation, Stations)
+			interferingStations = Stations(find(strcmp({Stations.BsClass},SelectedStation.BsClass)));
+			interferingStations = interferingStations([interferingStations.NCellID]~=SelectedStation.NCellID);
+		end
 		
 		function distance = getDistance(txPos,rxPos)
 			% Get distance between txPos and rxPos

@@ -1,6 +1,6 @@
 %   USER EQUIPMENT defines a value class for creating and working with UEs
 
-classdef UserEquipment
+classdef UserEquipment < matlab.mixin.Copyable
 	%   USER EQUIPMENT defines a value class for creating and working with UEs
 	properties
 		%Matlab tool box for LTE

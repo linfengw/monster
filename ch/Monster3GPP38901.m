@@ -47,8 +47,7 @@ classdef Monster3GPP38901 < handle
 				
 				
 				% Calculate recieved power between station and user
-				receivedPower = obj.computeLinkBudget(station, user, Mode);
-				receivedPowerWatt = 10^((receivedPower-30)/10);
+				[receivedPower, receivedPowerWatt] = obj.computeLinkBudget(station, user, Mode);
 				obj.TempSignalVariables.RxPower = receivedPower;
 
 				% Calculate SNR using thermal noise
@@ -105,6 +104,17 @@ classdef Monster3GPP38901 < handle
 			SNR = 10^((SNRdB)/20);
 		end
 
+		function [SNR, SINR] = getSNRandSINR(obj, Stations, station, user)
+			% Used for obtaining a SINR estimation of a given position
+			obj.TempSignalVariables.RxWaveform = station.Tx.Waveform; % Temp variable for BW indication
+			obj.TempSignalVariables.RxWaveformInfo = station.Tx.WaveformInfo; % Temp variable for BW indication
+			[receivedPower, receivedPowerWatt] = obj.computeLinkBudget(station, user, 'downlink');
+			obj.TempSignalVariables.RxPower = receivedPower;
+			[SNR, ~, noisePower] = obj.computeSNR();
+			SINR = obj.computeSINR(station, user, Stations, receivedPowerWatt, noisePower, 'downlink');
+			obj.clearTempVariables();
+		end
+
 		function [SINR] = computeSINR(obj, station, user, Stations, receivedPowerWatt, noisePower, Mode)
 			% Compute SINR using received power and the noise power.
 			% Interference is given as the power of the received signal, given the power of the associated base station, over the power of the neighboring base stations.
@@ -113,15 +123,14 @@ classdef Monster3GPP38901 < handle
 			% TODO: Add waveform type interference. 
 			% TODO: clean up function arguments.
 			if strcmp(obj.Channel.InterferenceType,'Full')
-				interferingStations = Stations(find(strcmp({Stations.BsClass},station.BsClass)));
-				interferingStations = interferingStations([interferingStations.NCellID]~=station.NCellID);
+				interferingStations = obj.Channel.getInterferingStations(station, Stations);
 				listCellPower = obj.listCellPower(user, interferingStations, Mode);
 				
 				intStations  = fieldnames(listCellPower);
 				intPower = 0;
 				% Sum power from interfering stations
 				for intStation = 1:length(fieldnames(listCellPower))
-					intPower =+ listCellPower.(intStations{intStation}).receivedPowerWatt;
+					intPower = intPower + listCellPower.(intStations{intStation}).receivedPowerWatt;
 				end
 
 				SINR = receivedPowerWatt / (intPower + noisePower);
@@ -145,7 +154,7 @@ classdef Monster3GPP38901 < handle
 
 
 		
-		function receivedPower = computeLinkBudget(obj, Station, User, mode)
+		function [receivedPower, receivedPowerWatt] = computeLinkBudget(obj, Station, User, mode)
 			% Compute link budget for Tx -> Rx
 			%
 			% This requires a :meth:`computePathLoss` method, which is supplied by child classes.
@@ -160,8 +169,10 @@ classdef Monster3GPP38901 < handle
 				case 'uplink'
 					lossdB = obj.computePathLoss(Station, User, User.Tx.Freq);
 					EIRPdBm = User.Tx.getEIRPdBm;
-					recievedPower = EIRPdBm-lossdB-Station.Rx.NoiseFigure; %dBm
+					receivedPower = EIRPdBm-lossdB-Station.Rx.NoiseFigure; %dBm
 			end
+			receivedPowerWatt = 10^((receivedPower-30)/10);
+
 			
 		end
 		
@@ -200,7 +211,15 @@ classdef Monster3GPP38901 < handle
 			shadowing = obj.Channel.enableShadowing;
 			avgBuilding = mean(obj.Channel.BuildingFootprints(:,5));
 			avgStreetWidth = obj.Channel.BuildingFootprints(2,2)-obj.Channel.BuildingFootprints(1,4);
+			try
 			lossdB = loss3gpp38901(areatype, distance2d, distance3d, f, hBs, hUt, avgBuilding, avgStreetWidth, LOS);
+			catch
+			if strcmp(ME.identifier,'Pathloss3GPP:Range')
+					minRange = 10;
+					lossdB = loss3gpp38901(areatype, minRange, distance3d, f, hBs, hUt, avgBuilding, avgStreetWidth, LOS);
+			end
+			end
+				
 			RxNode.Rx.ChannelConditions.BaseLoss = lossdB;
 			
 			if RxNode.Mobility.Indoor
@@ -241,18 +260,21 @@ classdef Monster3GPP38901 < handle
 		end
 		
 
-		function addFading(obj, TxNode, RxNode, mode)
+		function addFading(obj, station, user, mode)
 			% TODO: Add possibility to change the fading model used from parameters.
 			fadingmodel = 'tdl';
-
+			v = user.Mobility.Velocity * 3.6;                    % UT velocity in km/h
 			switch mode
-				case 'downlink'
-				v = RxNode.Mobility.Velocity * 3.6;                    % UT velocity in km/h
-				case 'uplink'
-				v = TxNode.Mobility.Velocity * 3.6;                    % UT velocity in km/h
+			case 'downlink'
+				fc = station.Tx.Freq*10e5;          % carrier frequency in Hz
+				samplingRate = station.Tx.WaveformInfo.SamplingRate;
+				seed = obj.Channel.getLinkSeed(user, station);
+			case 'uplink'
+				fc = user.Tx.Freq*10e5;          % carrier frequency in Hz
+				samplingRate = user.Tx.WaveformInfo.SamplingRate;
+				seed = obj.Channel.getLinkSeed(station, user);
 			end
 
-			fc = TxNode.Tx.Freq*10e5;          % carrier frequency in Hz
 			c = physconst('lightspeed'); % speed of light in m/s
 			fd = (v*1000/3600)/c*fc;     % UT max Doppler frequency in Hz
 			sig = [obj.TempSignalVariables.RxWaveform;zeros(200,1)];
@@ -269,10 +291,12 @@ classdef Monster3GPP38901 < handle
 					cdl.TransmitAntennaArray.Size = [1 1 1 1 1];
 					cdl.ReceiveAntennaArray.Size = [1 1 1 1 1];
 					cdl.SampleDensity = 256;
+					cdl.Seed = seed;
 					obj.TempSignalVariables.RxWaveform = cdl(sig);
 				case 'tdl'
-
 					tdl = nrTDLChannel;
+
+					% Set transmission direction for MIMO correlation
 					switch mode
 						case 'downlink'
 						tdl.TransmissionDirection = 'Downlink';
@@ -284,12 +308,13 @@ classdef Monster3GPP38901 < handle
 					tdl.DelaySpread = 300e-9;
 					%tdl.MaximumDopplerShift = 0;
 					tdl.MaximumDopplerShift = fd;
-					tdl.SampleRate = TxNode.Tx.WaveformInfo.SamplingRate;
+					tdl.SampleRate = samplingRate;
 					tdl.InitialTime = obj.Channel.getSimTime();
 					tdl.NumTransmitAntennas = 1;
 					tdl.NumReceiveAntennas = 1;
 					tdl.NormalizePathGains = false;
 					tdl.NormalizeChannelOutputs = false;
+					tdl.Seed = seed;
 					%tdl.KFactorScaling = true;
 					%tdl.KFactor = 3;
 					[obj.TempSignalVariables.RxWaveform, obj.TempSignalVariables.RxPathGains, ~] = tdl(sig);

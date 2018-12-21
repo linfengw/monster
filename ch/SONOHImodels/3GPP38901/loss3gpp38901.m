@@ -107,7 +107,7 @@ switch Scenario
 			PL2 = 28+40*log10(d_3d) + 20*log10(f_c)-9*log10((d_bp)^2+(h_bs-h_ut)^2);
 			PL_UMA_LOS = PL2;
 		else
-			error('2D distance not within ranges of [10m, %i m] or [%i m, 5km]',floor(d_bp))
+			error('Pathloss3GPP:Range','2D distance not within ranges of [10m, %i m] or [%i m, 5km]',floor(d_bp), floor(d_bp))
 		end
 		
 		
