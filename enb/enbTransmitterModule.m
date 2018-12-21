@@ -19,7 +19,6 @@ classdef enbTransmitterModule < handle
 		
 		% Reference subframes
 		Ref = struct('ReGrid',[], 'Waveform',[], 'WaveformInfo',[])
-    SssRef;
 		AntennaArray;
 		AntennaType; 
   end

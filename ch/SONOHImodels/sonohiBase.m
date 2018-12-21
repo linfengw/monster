@@ -200,19 +200,7 @@ classdef sonohiBase < handle
 			R0 = obj.Channel.getDistance(TxNode.Position, RxNode.Position)/1000;
 			lossdB = 10*log10(gaspl(R0,freq,T,P,ROU));
 		end
-		
-		function lossdBm = thermalLoss(obj, RxNode)
-			% Compute thermal loss based on bandwidth, at T = 290 K.
-			% Worst case given by the number of resource blocks. Bandwidth is
-			% given based on the waveform. Computed using matlabs :obj:`obw`
-			bw = obw(RxNode.Rx.Waveform, RxNode.Rx.WaveformInfo.SamplingRate);
-			T = 290;
-			k = physconst('Boltzmann');
-			thermalNoise = k*T*bw;
-			lossdBm = 10*log10(thermalNoise*1000);
-		end
 
-		
 		function addAWGN(obj, TxNode, paring, mode)
 			% Adds gaussian noise based on thermal noise and calculated recieved power.
 			

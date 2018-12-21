@@ -11,7 +11,7 @@ classdef MonsterChannel < handle
 		enableShadowing;
 		LOSMethod;
 		iRound = 0;
-		extraSamplesArea = 500;
+		extraSamplesArea = 200;
 	end
 
 	methods 

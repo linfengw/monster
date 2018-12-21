@@ -64,6 +64,7 @@ function [Stations, Param] = createBaseStations (Param)
 			Stations(iStation) = setNeighbours(Stations(iStation), Stations, Param);
 		end
 
+		if Param.draw
 		plotSNR(Param, Stations);
 
 		plotSINR(Param, Stations);
@@ -84,9 +85,10 @@ function [Stations, Param] = createBaseStations (Param)
 		plotControl(12,:) = [0 0 1 0]; %Plot pico eNBs for SINR plot
 		%plotControl(10,:) = [1 1 1 1]; %Plot all kinds of eNBs for spider plot
 		networkLayout.draweNBs(Param, plotControl);
+	
 		
 		voronoiPlots(Param, networkLayout);
-		
+		end
 		
 
 

@@ -19,7 +19,7 @@ classdef ChannelAPITest < matlab.unittest.TestCase
 			function createChannel(testCase)
 
 				load('ChTestParam.mat','Param');
-				
+				Param.eNBAntennaType = '3GPP38901';
 				Stations = createBaseStations(Param);
 				Users = createUsers(Param);
 				testCase.Param = Param;
@@ -63,8 +63,7 @@ classdef ChannelAPITest < matlab.unittest.TestCase
 				end
 
 				 function testSINRplot(testCase)
-				 	SINRplot = testCase.ChannelNoSF.plotSINR(testCase.Stations, testCase.Users(1), 150);
-				 	close(SINRplot)
+				 	SINRplot = testCase.ChannelNoSF.plotSINR(testCase.Stations, testCase.Users(1), 20);
 				end
 
 				function testChannelModel(testCase)

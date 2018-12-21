@@ -1,4 +1,4 @@
-classdef AntennaArray
+classdef AntennaArray < handle
     % Implementation of Antenna Array configuration pr. ITU M.2412/3GPP 38.901
     % Copyright Jakob Thrane/DTU 2018
     properties
@@ -56,7 +56,7 @@ classdef AntennaArray
 					obj.Bearing = bearing;
 					obj.Tilt = tilt;
 					for iPanel = 1:length(obj.Panels)
-						obj.Panels{iPanel} = obj.constructAntennaElements('3GPP');
+						obj.Panels{iPanel} = obj.constructAntennaElements();
 					end
 				end
         

@@ -164,7 +164,7 @@ classdef Monster3GPP38901 < handle
 			switch mode
 				case 'downlink'
 					lossdB = obj.computePathLoss(Station, User, Station.Tx.Freq);
-					EIRPdBm = Station.Tx.getEIRPdBm;
+					EIRPdBm = Station.Tx.getEIRPdBm(Station.Position, User.Position);
 					receivedPower = EIRPdBm-lossdB-User.Rx.NoiseFigure; %dBm
 				case 'uplink'
 					lossdB = obj.computePathLoss(Station, User, User.Tx.Freq);
