@@ -20,7 +20,7 @@ classdef enbReceiverModule < handle
 		end
 		
 		function createRecievedSignalStruct(obj, id)
-			obj.ReceivedSignals{id} = struct('Waveform', [], 'WaveformInfo', [], 'RxPwdBm', [], 'SNR', []);
+			obj.ReceivedSignals{id} = struct('Waveform', [], 'WaveformInfo', [], 'RxPwdBm', [], 'SNR', [], 'PathFilters', [], 'PathGains', []);
 		end
 
 		function obj = set.UeData(obj,UeData)

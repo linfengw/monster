@@ -5,13 +5,14 @@ classdef ChannelAPITest < matlab.unittest.TestCase
 		properties
 			Channel
 			ChannelModel
-			ChannelNoSF;
-			ChannelNoSFModel;
-			ChannelNoInterference;
+			ChannelNoSF
+			ChannelNoSFModel
+			ChannelNoInterference
 			Param
 			Stations
-			Users;
+			Users
 			SFplot
+			SINRplot
 		end
 
 		methods (TestClassSetup)
@@ -19,7 +20,6 @@ classdef ChannelAPITest < matlab.unittest.TestCase
 			function createChannel(testCase)
 
 				load('ChTestParam.mat','Param');
-				Param.eNBAntennaType = '3GPP38901';
 				Stations = createBaseStations(Param);
 				Users = createUsers(Param);
 				testCase.Param = Param;
@@ -28,13 +28,15 @@ classdef ChannelAPITest < matlab.unittest.TestCase
 				testCase.Channel = MonsterChannel(Stations, Users, Param);
 				testCase.ChannelModel = testCase.Channel.ChannelModel;
 				testCase.SFplot = testCase.ChannelModel.plotSFMap(Stations(1));
-				%testCase.SINRplot = testCase.Channel.plotSINR(Stations, Stations(1), Users(1));
-
+				
+				
+				
 				% Channel with no shadowing
 				Param.channel.enableShadowing = 0;
 				Param.channel.LOSMethod = 'NLOS';
 				testCase.ChannelNoSF = MonsterChannel(Stations, Users, Param);
 				testCase.ChannelNoSFModel = testCase.ChannelNoSF.ChannelModel;
+				testCase.SINRplot = testCase.ChannelNoSF.plotSINR(testCase.Stations, testCase.Users(1), 30);
 
 				% Channel with no interference
 				Param.channel.enableShadowing = 1;
@@ -42,15 +44,17 @@ classdef ChannelAPITest < matlab.unittest.TestCase
 				testCase.ChannelNoInterference = MonsterChannel(Stations, Users, Param);
 
 			end
+			
+			
 
 		end
 		
 		methods (TestClassTeardown)
 		
-			% function closePlots(testCase)
-			% 	close(testCase.SFplot)
-			% 	close(testCase.SINRplot)
-			% end
+			function closePlots(testCase)
+				close(testCase.SFplot)
+				close(testCase.SINRplot)
+			end
 
 		end
     
@@ -60,10 +64,6 @@ classdef ChannelAPITest < matlab.unittest.TestCase
         %% Test Function
         function testConstructor(testCase)
             testCase.verifyTrue(isa(testCase.Channel,'MonsterChannel'))
-				end
-
-				 function testSINRplot(testCase)
-				 	SINRplot = testCase.ChannelNoSF.plotSINR(testCase.Stations, testCase.Users(1), 20);
 				end
 
 				function testChannelModel(testCase)
@@ -162,9 +162,13 @@ classdef ChannelAPITest < matlab.unittest.TestCase
 					testCase.verifyTrue(~isempty(testCase.Users(1).Rx.WaveformInfo))
 					testCase.verifyTrue(~isempty(testCase.Users(1).Rx.SNR))
 					testCase.verifyTrue(~isempty(testCase.Users(1).Rx.RxPwdBm))
-					testCase.verifyTrue(~isempty(testCase.Users(1).Rx.SINR))
+					testCase.verifyTrue(~isempty(testCase.Users(1).Rx.PathGains))
+					testCase.verifyTrue(~isempty(testCase.Users(1).Rx.PathFilters))
 					testCase.verifyTrue(testCase.Users(1).Rx.SINR < testCase.Users(1).Rx.SNR)
 					testCase.verifyTrue(testCase.Users(1).Rx.SINRdB < testCase.Users(1).Rx.SNRdB)
+					
+					% Check that the linkConditions are stored
+					testCase.verifyTrue(~isempty(testCase.Channel.ChannelModel.LinkConditions.downlink{1,1}))
 					
 					
 					% Check the other users have nothing
@@ -173,6 +177,8 @@ classdef ChannelAPITest < matlab.unittest.TestCase
 					testCase.verifyTrue(isempty(testCase.Users(2).Rx.SNR))
 					testCase.verifyTrue(isempty(testCase.Users(2).Rx.RxPwdBm))
 					testCase.verifyTrue(isempty(testCase.Users(2).Rx.SINR))
+					testCase.verifyTrue(isempty(testCase.Users(2).Rx.PathGains))
+					testCase.verifyTrue(isempty(testCase.Users(2).Rx.PathFilters))
 				
 				end
 				
@@ -200,7 +206,13 @@ classdef ChannelAPITest < matlab.unittest.TestCase
 					testCase.verifyTrue(~isempty(testCase.Stations(1).Rx.ReceivedSignals{1}.WaveformInfo))
 					testCase.verifyTrue(~isempty(testCase.Stations(1).Rx.ReceivedSignals{1}.SNR))
 					testCase.verifyTrue(~isempty(testCase.Stations(1).Rx.ReceivedSignals{1}.RxPwdBm))
+					testCase.verifyTrue(~isempty(testCase.Stations(1).Rx.ReceivedSignals{1}.PathGains))
+					testCase.verifyTrue(~isempty(testCase.Stations(1).Rx.ReceivedSignals{1}.PathFilters))
 					testCase.verifyTrue(isempty(testCase.Stations(1).Rx.ReceivedSignals{2}))
+					
+					% Check that the linkConditions are stored
+					testCase.verifyTrue(~isempty(testCase.Channel.ChannelModel.LinkConditions.uplink{1,1}))
+					
 					
 					% Combine received signals into one final waveform.
 					testCase.Stations(1).Rx.createReceivedSignal();
@@ -228,10 +240,29 @@ classdef ChannelAPITest < matlab.unittest.TestCase
 					testCase.verifyTrue(~isempty(testCase.Users(1).Rx.RxPwdBm))
 					testCase.verifyEqual(testCase.Users(1).Rx.SINR, testCase.Users(1).Rx.SNR)
 					testCase.verifyEqual(testCase.Users(1).Rx.SINRdB, testCase.Users(1).Rx.SNRdB)
+				
+				
 				end
 				
-				
-				
+				function testDownlinkAndUplink(testCase)
+					% Assign user
+					testCase.Stations(1).Users = struct('UeId', testCase.Users(1).NCellID, 'CQI', -1, 'RSSI', -1);
+					testCase.Users(1).ENodeBID = testCase.Stations(1).NCellID;
+					
+					testCase.Stations(1).Tx.createReferenceSubframe();
+					testCase.Stations(1).Tx.assignReferenceSubframe();
+					testCase.Channel.traverse(testCase.Stations, testCase.Users, 'downlink')
+					
+					% Assign waveform and waveinfo to tx module
+					% Uplink
+					testCase.Users(1).Tx = testCase.Users(1).Tx.mapGridAndModulate(testCase.Users(1), testCase.Param);
+					testCase.Stations(1).setScheduleUL(testCase.Param);
+					testCase.Channel.traverse(testCase.Stations, testCase.Users, 'uplink')
+					
+					testCase.verifyTrue(~isempty(testCase.Channel.ChannelModel.LinkConditions.downlink{1,1}))
+					testCase.verifyTrue(~isempty(testCase.Channel.ChannelModel.LinkConditions.uplink{1,1}))
+					
+				end
 				
 				
 		end

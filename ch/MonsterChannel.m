@@ -113,21 +113,23 @@ classdef MonsterChannel < handle
 
 		function h = plotSINR(obj, Stations, User, Resolution)
 			sonohilog('Computing SINR map...')
-			for iStation = 1:length(Stations)
+			parfor iStation = 1:length(Stations)
 				selectedStation = Stations(iStation);
-				[SINRmap(:,:,iStation), SNRmap(:,:,iStation), axis] = obj.SignalQualityMap(Stations, selectedStation, User, Resolution);
+				[SINRmap(:,:,iStation), SNRmap(:,:,iStation), axis(:,:,iStation)] = obj.SignalQualityMap(Stations, selectedStation, User, Resolution);
 			end
 			
 			
 			h = figure;
-			contourf(axis(1,:),axis(2,:),20*log10(max(SINRmap,[],3)))
-			colorbar()
+			contourf(axis(1,:,1),axis(2,:,1),20*log10(max(SINRmap,[],3)))
+			c = colorbar();
+			c.Label.String = 'SINR [dB]';
 			xlabel('X [meters]')
 			ylabel('Y [meters]')
 			hold on
 			for iStation = 1:length(Stations)
 				plot(Stations(iStation).Position(1), Stations(iStation).Position(2), 'o', 'MarkerSize', 10, 'MarkerFaceColor', 'r')
 			end
+
 			
 			
 		end

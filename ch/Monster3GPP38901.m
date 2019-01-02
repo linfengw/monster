@@ -4,6 +4,8 @@ classdef Monster3GPP38901 < handle
 		StationConfigs;
 		Channel;
 		TempSignalVariables = struct();
+		Pairings = [];
+		LinkConditions = struct();
 	end
 	
 	methods
@@ -12,6 +14,8 @@ classdef Monster3GPP38901 < handle
 			obj.Channel = MonsterChannel;
 			obj.setupStationConfigs(Stations)
 			obj.createSpatialMaps()
+			obj.LinkConditions.downlink = [];
+			obj.LinkConditions.uplink = [];
 		end
 		
 		function setupStationConfigs(obj, Stations)
@@ -30,7 +34,11 @@ classdef Monster3GPP38901 < handle
 		function propagateWaveforms(obj, Stations, Users, Mode)
 			
 			Pairing = obj.Channel.getPairing(Stations);
+			obj.Pairings = Pairing;
 			numLinks = length(Pairing(1,:));
+			
+			obj.LinkConditions.(Mode) = cell(numLinks,1);
+				
 			for i = 1:numLinks
 				obj.clearTempVariables()
 				% Local copy for mutation
@@ -79,8 +87,15 @@ classdef Monster3GPP38901 < handle
 					case 'uplink'
 						obj.setReceivedSignal(station, user);
 				end
+
+				% Store in channel variable
+				obj.storeLinkCondition(i, Mode)
 				
 			end
+		end
+		
+		function createLinkConditionVariable(obj)
+			
 		end
 		
 		function N0 = computeSpectralNoiseDensity(obj, Station, Mode)
@@ -365,6 +380,8 @@ classdef Monster3GPP38901 < handle
 				RxNode.Rx.ReceivedSignals{userId}.WaveformInfo = obj.TempSignalVariables.RxWaveformInfo;
 				RxNode.Rx.ReceivedSignals{userId}.RxPwdBm = obj.TempSignalVariables.RxPower;
 				RxNode.Rx.ReceivedSignals{userId}.SNR = obj.TempSignalVariables.RxSNR;
+				RxNode.Rx.ReceivedSignals{userId}.PathGains = obj.TempSignalVariables.RxPathGains;
+				RxNode.Rx.ReceivedSignals{userId}.PathFilters = obj.TempSignalVariables.RxPathFilters;
 			elseif isa(RxNode, 'UserEquipment')
 				RxNode.Rx.Waveform = obj.TempSignalVariables.RxWaveform;
 				RxNode.Rx.WaveformInfo =  obj.TempSignalVariables.RxWaveformInfo;
@@ -376,6 +393,18 @@ classdef Monster3GPP38901 < handle
 			end
 			
 			
+		end
+
+		function storeLinkCondition(obj, index, mode)
+			linkCondition = struct();
+			linkCondition.Waveform = obj.TempSignalVariables.RxWaveform;
+			linkCondition.WaveformInfo =  obj.TempSignalVariables.RxWaveformInfo;
+			linkCondition.RxPwdBm = obj.TempSignalVariables.RxPower;
+			linkCondition.SNR = obj.TempSignalVariables.RxSNR;
+			linkCondition.SINR = obj.TempSignalVariables.RxSINR;
+			linkCondition.PathGains = obj.TempSignalVariables.RxPathGains;
+			linkCondition.PathFilters = obj.TempSignalVariables.RxPathFilters;
+			obj.LinkConditions.(mode){index} = linkCondition;
 		end
 		
 		function clearTempVariables(obj)
