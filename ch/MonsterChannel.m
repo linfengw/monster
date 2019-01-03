@@ -92,8 +92,8 @@ classdef MonsterChannel < handle
 
 			
 			areaSize = obj.getAreaSize;
-			X = -areaSize:Resolution:areaSize;
-			Y = -areaSize:Resolution:areaSize;
+			X = -areaSize+Resolution*2:Resolution:areaSize-Resolution*2;
+			Y = -areaSize+Resolution*2:Resolution:areaSize-Resolution*2;
 			axis = [X; Y];
 			SINRmap = nan(length(X),length(Y));
 			SNRmap = nan(length(X),length(Y));
@@ -102,6 +102,9 @@ classdef MonsterChannel < handle
 			selectedStationCopy = copy(selectedStation);
 			selectedStationCopy.Tx.createReferenceSubframe();
 			selectedStationCopy.Tx.assignReferenceSubframe();
+			% TODO: turn this into a matrix operation for speed. 1) Create matrix
+			% of received power for each station (requires some changes to the function calls from the channel model). 2) Compute SINR with each
+			% permutation. 3) Done
 			for x = 1:length(X)
 				for y = 1:length(Y)
 					user = copy(User);

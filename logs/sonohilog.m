@@ -67,7 +67,11 @@ if nargin > 1 && ischar(varargin{1})
         logType = varargin{1};
 				argIdx = 2;
 				if strcmp(logType,'ERR')
+					try
 					errType = varargin{2};
+					catch ME
+					errType = 'Monster:unspecified';
+					end
 				end
     end
 end
