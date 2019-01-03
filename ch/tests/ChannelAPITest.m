@@ -36,7 +36,7 @@ classdef ChannelAPITest < matlab.unittest.TestCase
 				Param.channel.LOSMethod = 'NLOS';
 				testCase.ChannelNoSF = MonsterChannel(Stations, Users, Param);
 				testCase.ChannelNoSFModel = testCase.ChannelNoSF.ChannelModel;
-				testCase.SINRplot = testCase.ChannelNoSF.plotSINR(testCase.Stations, testCase.Users(1), 30);
+				%testCase.SINRplot = testCase.ChannelNoSF.plotSINR(testCase.Stations, testCase.Users(1), 30);
 
 				% Channel with no interference
 				Param.channel.enableShadowing = 1;
@@ -53,9 +53,19 @@ classdef ChannelAPITest < matlab.unittest.TestCase
 		
 			function closePlots(testCase)
 				close(testCase.SFplot)
-				close(testCase.SINRplot)
+				%close(testCase.SINRplot)
 			end
 
+		end
+		
+		methods (TestMethodTeardown)
+			
+			function resetUserRx(testCase)
+				for iUser = 1:length(testCase.Users)
+					testCase.Users(iUser).reset();
+				end
+			end
+			
 		end
     
     %% Test Method Block
@@ -164,6 +174,9 @@ classdef ChannelAPITest < matlab.unittest.TestCase
 					testCase.verifyTrue(~isempty(testCase.Users(1).Rx.RxPwdBm))
 					testCase.verifyTrue(~isempty(testCase.Users(1).Rx.PathGains))
 					testCase.verifyTrue(~isempty(testCase.Users(1).Rx.PathFilters))
+					testCase.verifyTrue(testCase.Channel.ChannelModel.TempSignalVariables.RxSINR < testCase.Channel.ChannelModel.TempSignalVariables.RxSNR)
+					testCase.verifyTrue(testCase.Channel.ChannelModel.TempSignalVariables.RxSINRdB < testCase.Channel.ChannelModel.TempSignalVariables.RxSNRdB)
+					
 					testCase.verifyTrue(testCase.Users(1).Rx.SINR < testCase.Users(1).Rx.SNR)
 					testCase.verifyTrue(testCase.Users(1).Rx.SINRdB < testCase.Users(1).Rx.SNRdB)
 					
@@ -220,7 +233,25 @@ classdef ChannelAPITest < matlab.unittest.TestCase
 					% received power set.
 					testCase.verifyEqual(testCase.Stations(1).Rx.Waveform, setPower(testCase.Stations(1).Rx.ReceivedSignals{1}.Waveform, testCase.Stations(1).Rx.ReceivedSignals{1}.RxPwdBm))
 
-				end
+				 end
+				
+				 function testOneStationCase(testCase)
+					% Assign user
+					testCase.Stations(1).Users = struct('UeId', testCase.Users(1).NCellID, 'CQI', -1, 'RSSI', -1);
+					testCase.Users(1).ENodeBID = testCase.Stations(1).NCellID;
+					
+					% Assign waveform and waveinfo to tx module
+					testCase.Stations(1).Tx.createReferenceSubframe();
+					testCase.Stations(1).Tx.assignReferenceSubframe();
+					
+					testCase.Channel.traverse(testCase.Stations(1), testCase.Users, 'downlink')
+					testCase.verifyEqual(round(testCase.Channel.ChannelModel.TempSignalVariables.RxSINR,2), round(testCase.Channel.ChannelModel.TempSignalVariables.RxSNR,2))
+					testCase.verifyEqual(round(testCase.Channel.ChannelModel.TempSignalVariables.RxSINRdB,2), round(testCase.Channel.ChannelModel.TempSignalVariables.RxSNRdB,2))
+					testCase.verifyEqual(round(testCase.Users(1).Rx.SINR,2), round(testCase.Users(1).Rx.SNR,2))
+					testCase.verifyEqual(round(testCase.Users(1).Rx.SINRdB,2), round(testCase.Users(1).Rx.SNRdB,2))
+					
+					
+				 end
 				
 
 				function testNoInterference(testCase)
@@ -238,6 +269,9 @@ classdef ChannelAPITest < matlab.unittest.TestCase
 					testCase.verifyTrue(~isempty(testCase.Users(1).Rx.WaveformInfo))
 					testCase.verifyTrue(~isempty(testCase.Users(1).Rx.SNR))
 					testCase.verifyTrue(~isempty(testCase.Users(1).Rx.RxPwdBm))
+					
+					testCase.verifyEqual(testCase.ChannelNoInterference.ChannelModel.TempSignalVariables.RxSINR, testCase.ChannelNoInterference.ChannelModel.TempSignalVariables.RxSNR)
+					testCase.verifyEqual(testCase.ChannelNoInterference.ChannelModel.TempSignalVariables.RxSINRdB, testCase.ChannelNoInterference.ChannelModel.TempSignalVariables.RxSNRdB)
 					testCase.verifyEqual(testCase.Users(1).Rx.SINR, testCase.Users(1).Rx.SNR)
 					testCase.verifyEqual(testCase.Users(1).Rx.SINRdB, testCase.Users(1).Rx.SNRdB)
 				

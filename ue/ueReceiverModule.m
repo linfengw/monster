@@ -60,14 +60,14 @@ classdef ueReceiverModule < handle
 		function obj = set.SINR(obj,SINR,stationID)
 			% SINR given linear
 			obj.SINR = SINR;
-			obj.SINRdB = 20*log10(SINR);
+			obj.SINRdB = 10*log10(SINR);
 			
 		end
 		
 		function obj = set.SNR(obj,SNR)
 			% SNR given linear
 			obj.SNR = SNR;
-			obj.SNRdB = 20*log10(SNR);
+			obj.SNRdB = 10*log10(SNR);
 		end
 		
 		function obj = set.RxPwdBm(obj,RxPwdBm)
@@ -337,16 +337,15 @@ classdef ueReceiverModule < handle
 		% Reset receiver
 		function obj = reset(obj)
 			obj.NoiseEst = [];
-			obj.RSSIdBm = 0;
-			obj.RSRQdB = 0;
-			obj.RSRPdBm = 0;
-			obj.SINR = 0;
-			obj.SINRdB = 0;
-			obj.SNR = 0;
-			obj.SNRdB = 0;
-			obj.Waveform = 0;
-			obj.RxPwdBm = 0;
-			obj.IntSigLoss = 0;
+			obj.RSSIdBm = [];
+			obj.RSRQdB = [];
+			obj.RSRPdBm = [];
+			obj.SINR = [];
+			obj.SINRdB = [];
+			obj.SNR = [];
+			obj.SNRdB = [];
+			obj.Waveform = [];
+			obj.RxPwdBm = [];
 			obj.Subframe = [];
 			obj.EstChannelGrid = [];
 			obj.EqSubframe = [];

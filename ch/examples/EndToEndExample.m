@@ -10,8 +10,8 @@ Param.schRounds = 300;
 Param.channel.region = struct();
 Param.channel.region.macroScenario = 'UMa';
 Param.channel.enableShadowing = true;
-Param.channel.enableFading = true;
-Param.channel.enableInterference = false;
+Param.channel.enableFading = false;
+Param.channel.InterferenceType = 'None';
 Param.channel.perfectSynchronization = true;
 
 
@@ -25,7 +25,7 @@ end
 User = createUsers(Param);
 
 % Create Channel scenario
-Channel = ChBulk_v2(Station, User, Param);
+Channel = MonsterChannel(Station, User, Param);
 ChannelEstimator = createChannelEstimator();
 
 Station.Users = struct('UeId', User.NCellID, 'CQI', -1, 'RSSI', -1);
@@ -47,13 +47,13 @@ User.NSubframe = subframe-1;
 User.Position(1:2) = Station.Position(1:2) + [UserDistance, 0];
 % Traverse channel
 Channel.iRound = subframe-1;
-[~, User] = Channel.traverse(Station,User,'downlink');
+Channel.traverse(Station,User,'downlink');
 %User.Rx.plotSpectrum()
 User.Rx.receiveDownlink(Station, ChannelEstimator.Downlink);
 fprintf("Subframe %i Downlink CQI: %i \n", subframe-1, User.Rx.CQI)
 downlink_cqi(subframe) = User.Rx.CQI;
 downlink_snr(subframe) = User.Rx.SNRdB;
-downlink_noiseest(subframe) = 20*log10(1/User.Rx.NoiseEst);
+downlink_noiseest(subframe) = User.Rx.NoiseEst;
 downlink_sinrs(subframe,:) = User.Rx.SINRS;
 %% Uplink
 User.Tx = User.Tx.mapGridAndModulate(User, Param);
@@ -64,8 +64,8 @@ Station.setScheduleUL(Param);
 %User.Tx.plotResources()
 
 % Traverse channel uplink
-[Station, ~] = Channel.traverse(Station,User,'uplink');
-uplink_snr_calc(subframe,:) = 20*log10(Station.Rx.ReceivedSignals{1}.SNR);
+Channel.traverse(Station,User,'uplink');
+uplink_snr_calc(subframe,:) = 10*log10(Station.Rx.ReceivedSignals{1}.SNR);
 Station.Rx.createReceivedSignal()
 
 
@@ -82,7 +82,7 @@ end
 save(sprintf('DownlinkCQI_uplinkCSI_%im_%isubframes_300e-9deplaySpread_0doppler.mat',UserDistance,Param.schRounds),'downlink_cqi', 'downlink_noiseest','downlink_sinrs','downlink_snr','uplink_csi', 'uplink_snr_calc');
 
 figure
-plot(uplink_noise_est, 1./(10.^(downlink_noiseest/20)),'-')
+plot(10*log10(uplink_noise_est), 10*log10(downlink_noiseest),'o')
 xlabel('Estimated uplink \sigma^2')
 ylabel('Estimated downlink \sigma^2')
 
@@ -114,8 +114,8 @@ hold on
 yyaxis right
 plot(downlink_snr)
 plot(downlink_noiseest,'o')
-plot(downlink_sinrs(:,1))
-plot(10*log10(1./uplink_noise_est(:,1)),'*')
+plot(downlink_sinrs(:,1)) 
+plot(20*log10(1./uplink_noise_est(:,1)),'*')
 plot(uplink_snr_calc(:,1),'<')
 minSNR = min([min(downlink_snr), min(downlink_noiseest), min(downlink_sinrs)]);
 ylabel('SNR (dB)')

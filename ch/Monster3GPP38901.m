@@ -66,6 +66,7 @@ classdef Monster3GPP38901 < handle
 				% Add/compute interference
 				SINR = obj.computeSINR(station, user, Stations, receivedPowerWatt, noisePower, Mode);
 				obj.TempSignalVariables.RxSINR = SINR;
+				obj.TempSignalVariables.RxSINRdB = 10*log10(SINR);
 
 				% Compute N0
 				N0 = obj.computeSpectralNoiseDensity(station, Mode);
@@ -94,29 +95,25 @@ classdef Monster3GPP38901 < handle
 			end
 		end
 		
-		function createLinkConditionVariable(obj)
-			
-		end
-		
 		function N0 = computeSpectralNoiseDensity(obj, Station, Mode)
 			% Compute spectral noise density NO
+			% TODO: Find citation for this computation. It's partly taken from matworks - however there is a theoretical equation for the symbol energy of OFDM signals.
 			switch Mode
 			case 'downlink'
 				Es = sqrt(2.0*Station.CellRefP*double(obj.TempSignalVariables.RxWaveformInfo.Nfft));
-				N0 = 1/(Es*obj.TempSignalVariables.RxSINR);
+				N0 = 1/(Es*sqrt(obj.TempSignalVariables.RxSINR));
 			case 'uplink'
-				N0 = 1/(obj.TempSignalVariables.RxSINR * sqrt(double(obj.TempSignalVariables.RxWaveformInfo.Nfft)))/sqrt(2);
+				N0 = 1/(sqrt(obj.TempSignalVariables.RxSINR)  * sqrt(double(obj.TempSignalVariables.RxWaveformInfo.Nfft)))/sqrt(2);
 			end
 
 		end 
 
-		function [SNR, SNRdB, noise] = computeSNR(obj)
+		function [SNR, SNRdB, thermalNoise] = computeSNR(obj)
 			% Calculate SNR using thermal noise. Thermal noise is bandwidth dependent.
-			thermalLossdBm = obj.thermalLoss();
+			[thermalLossdBm, thermalNoise] = obj.thermalLoss();
 			rxNoiseFloor = thermalLossdBm;
-			noise = 10^((rxNoiseFloor-30)/10);
 			SNRdB = obj.TempSignalVariables.RxPower-rxNoiseFloor;
-			SNR = 10^((SNRdB)/20);
+			SNR = 10^((SNRdB)/10);
 		end
 
 		function [SNR, SINR] = getSNRandSINR(obj, Stations, station, user)
@@ -333,19 +330,20 @@ classdef Monster3GPP38901 < handle
 			config = obj.StationConfigs.(stationString);
 		end
 
-		function h = plotImpulseResponse(obj, Mode, TxNode, RxNode)
+		function h = plotImpulseResponse(obj, Mode, Station, User)
 			% Plotting of impulse response applied from TxNode to RxNode
 			% Find pairing 
 
 			% Find stored pathfilters
-
+			
 			% return plot of impulseresponse
-
+			h = figure
+			plot(sum(obj.LinkConditions.(Mode){1,1}.PathFilters,2))
 
 		end
 		
 		function setWaveform(obj, TxNode)
-			% Copies waveform and waveform info to Rx module, enables transmission.
+			% Copies waveform and waveform info from tx module to temp variables
 			if isempty(TxNode.Tx.Waveform)
 				sonohilog('Transmitter waveform is empty.', 'ERR', 'MonsterChannel:EmptyTxWaveform')
 			end
@@ -492,7 +490,7 @@ classdef Monster3GPP38901 < handle
 			XCorr = interp2(axisXY(1,:), axisXY(2,:), map, userPosition(1), userPosition(2), 'spline');
 		end
 
-		function lossdBm = thermalLoss(obj)
+		function [lossdBm, thermalNoise] = thermalLoss(obj)
 			% Compute thermal loss based on bandwidth, at T = 290 K.
 			% Worst case given by the number of resource blocks. Bandwidth is
 			% given based on the waveform. Computed using matlabs :obj:`obw`
