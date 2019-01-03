@@ -234,8 +234,6 @@ classdef Monster3GPP38901 < handle
 						lossdB = loss3gpp38901(areatype, minRange, distance3d, f, hBs, hUt, avgBuilding, avgStreetWidth, LOS);
 				end
 			end
-				
-			RxNode.Rx.ChannelConditions.BaseLoss = lossdB;
 			
 			if RxNode.Mobility.Indoor
 				% Low loss model consists of LOS
@@ -254,23 +252,13 @@ classdef Monster3GPP38901 < handle
 				PL_in  = indoorloss3gpp38901(areatype);
 				indoorLosses = PL_tw + PL_in + randn(1, 1)*sigma_P;
 				lossdB = lossdB + indoorLosses;
-				obj.Channel.storeChannelCondition(TxNode, RxNode, 'IndoorLoss', indoorLosses);
-				
 			end
-			
-			% Return of channel conditions if required.
-			% TODO: For atomic reasonability, consider moving this to class properties instead.
-			%obj.Channel.storeChannelCondition(TxNode, RxNode, 'baseloss', lossdB);
-			%obj.Channel.storeChannelCondition(TxNode, RxNode, 'LOS', LOS);
-			%obj.Channel.storeChannelCondition(TxNode, RxNode, 'LOSprop', prop);
-			
+		
 			if shadowing
 				XCorr = obj.computeShadowingLoss(TxNode, RxNode.Position, LOS);
-				%obj.Channel.storeChannelCondition(TxNode, RxNode, 'LSP', XCorr); % Only large scale parameters at the moment is shadowing.
 				lossdB = lossdB + XCorr;
 			end
 			
-			%obj.Channel.storeChannelCondition(TxNode, RxNode, 'pathloss', lossdB);
 			
 		end
 		
@@ -343,6 +331,17 @@ classdef Monster3GPP38901 < handle
 			% Find station config
 			stationString = sprintf('station%i',station.NCellID);
 			config = obj.StationConfigs.(stationString);
+		end
+
+		function h = plotImpulseResponse(obj, Mode, TxNode, RxNode)
+			% Plotting of impulse response applied from TxNode to RxNode
+			% Find pairing 
+
+			% Find stored pathfilters
+
+			% return plot of impulseresponse
+
+
 		end
 		
 		function setWaveform(obj, TxNode)

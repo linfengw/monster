@@ -200,7 +200,10 @@ classdef sonohiBase < handle
 			R0 = obj.Channel.getDistance(TxNode.Position, RxNode.Position)/1000;
 			lossdB = 10*log10(gaspl(R0,freq,T,P,ROU));
 		end
+		
 
+
+		
 		function addAWGN(obj, TxNode, paring, mode)
 			% Adds gaussian noise based on thermal noise and calculated recieved power.
 			

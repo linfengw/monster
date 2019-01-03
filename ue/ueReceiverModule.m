@@ -35,12 +35,11 @@ classdef ueReceiverModule < handle
 		PropDelay;
 		HistoryStats;
 		Demod;
-        ChannelConditions = struct(); % Storage of channel conditions
-				AzimuthAngle;
+		AzimuthAngle;
 	end
 
 	properties (Access = private)
-	PerfectSynchronization;
+		PerfectSynchronization;
 	end
 	
 	methods
@@ -51,26 +50,7 @@ classdef ueReceiverModule < handle
 			obj.CQI = 3;
 			obj.Blocks = struct('ok', 0, 'err', 0, 'tot', 0);
 			obj.Bits = struct('ok', 0, 'err', 0, 'tot', 0);
-			for iStation = 1:Param.numEnodeBs
-				cellstring = char(strcat("NCellID",int2str(iStation)));
-				obj.HistoryStats.(cellstring) = struct('SINRdB',[],'SNRdB',[],'RxPwdBm',[]);
-			end
 			obj.PerfectSynchronization = Param.channel.perfectSynchronization;
-		end
-		
-		function oldValues = getFromHistory(obj, field, stationID)
-			stationfield = strcat('NCellID',int2str(stationID));
-			path = {'HistoryStats', stationfield, field};
-			oldValues = getfield(obj, path{:});
-		end
-		
-		function obj = addToHistory(obj, field, stationID)
-			oldValues = obj.getFromHistory(field, stationID);
-			stationfield = strcat('NCellID',int2str(stationID));
-			path = {'HistoryStats', stationfield, field};
-			newValue = getfield(obj, field);
-			newArray = [oldValues, newValue];
-			obj = setfield(obj, path{:}, newArray);		
 		end
 		
 		function obj = set.Waveform(obj,Sig)
@@ -384,6 +364,7 @@ classdef ueReceiverModule < handle
 
 
 		function plotSpectrum(obj)
+			% TODO: Missing axis
 			figure
 			plot(10*log10(abs(fftshift(fft(obj.Waveform)))))
 		end
