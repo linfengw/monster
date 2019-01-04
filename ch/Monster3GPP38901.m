@@ -264,16 +264,31 @@ classdef Monster3GPP38901 < handle
 			% TODO: Add possibility to change the fading model used from parameters.
 			fadingmodel = 'tdl';
 			v = user.Mobility.Velocity * 3.6;                    % UT velocity in km/h
-			switch mode
-			case 'downlink'
-				fc = station.Tx.Freq*10e5;          % carrier frequency in Hz
-				samplingRate = station.Tx.WaveformInfo.SamplingRate;
+
+			% Determine channel randomness/correlation
+			if obj.Channel.enableReciprocity
 				seed = obj.Channel.getLinkSeed(user, station);
-			case 'uplink'
-				fc = user.Tx.Freq*10e5;          % carrier frequency in Hz
-				samplingRate = user.Tx.WaveformInfo.SamplingRate;
-				seed = obj.Channel.getLinkSeed(station, user);
+			else
+				switch mode
+				case 'downlink'
+					seed = obj.Channel.getLinkSeed(user, station)+2;
+				case 'uplink'
+					seed = obj.Channel.getLinkSeed(user, station)+3;
+				end
+				
 			end
+
+			% Extract carrier frequncy and sampling rate
+			switch mode
+				case 'downlink'
+					fc = station.Tx.Freq*10e5;          % carrier frequency in Hz
+					samplingRate = station.Tx.WaveformInfo.SamplingRate;
+				case 'uplink'
+					fc = user.Tx.Freq*10e5;          % carrier frequency in Hz
+					samplingRate = user.Tx.WaveformInfo.SamplingRate;
+			end
+
+
 
 			c = physconst('lightspeed'); % speed of light in m/s
 			fd = (v*1000/3600)/c*fc;     % UT max Doppler frequency in Hz
@@ -312,8 +327,6 @@ classdef Monster3GPP38901 < handle
 					tdl.InitialTime = obj.Channel.getSimTime();
 					tdl.NumTransmitAntennas = 1;
 					tdl.NumReceiveAntennas = 1;
-					tdl.NormalizePathGains = false;
-					tdl.NormalizeChannelOutputs = false;
 					tdl.Seed = seed;
 					%tdl.KFactorScaling = true;
 					%tdl.KFactor = 3;
@@ -330,16 +343,18 @@ classdef Monster3GPP38901 < handle
 			config = obj.StationConfigs.(stationString);
 		end
 
-		function h = plotImpulseResponse(obj, Mode, Station, User)
+		function h = getImpulseResponse(obj, Mode, Station, User)
 			% Plotting of impulse response applied from TxNode to RxNode
 			% Find pairing 
 
 			% Find stored pathfilters
 			
 			% return plot of impulseresponse
-			h = figure
-			plot(sum(obj.LinkConditions.(Mode){1,1}.PathFilters,2))
+			h = sum(obj.TempSignalVariables.RxPathFilters,2);
+		end
 
+		function h = getPathGains(obj)
+			h = sum(obj.TempSignalVariables.RxPathGains,2);
 		end
 		
 		function setWaveform(obj, TxNode)

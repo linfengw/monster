@@ -9,6 +9,7 @@ classdef MonsterChannel < handle
 		enableFading;
 		InterferenceType;
 		enableShadowing;
+		enableReciprocity;
 		LOSMethod;
 		iRound = 0;
 		extraSamplesArea = 1200;
@@ -21,6 +22,7 @@ classdef MonsterChannel < handle
 			obj.enableFading = Param.channel.enableFading;
 			obj.InterferenceType = Param.channel.InterferenceType;
 			obj.enableShadowing = Param.channel.enableShadowing;
+			obj.enableReciprocity = Param.channel.enableReciprocity;
 			obj.BuildingFootprints = Param.buildings;
 			obj.LOSMethod = Param.channel.LOSMethod;
 			obj.setupChannel(Stations)

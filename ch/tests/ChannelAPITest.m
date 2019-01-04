@@ -28,7 +28,7 @@ classdef ChannelAPITest < matlab.unittest.TestCase
 				testCase.Channel = MonsterChannel(Stations, Users, Param);
 				testCase.ChannelModel = testCase.Channel.ChannelModel;
 				testCase.SFplot = testCase.ChannelModel.plotSFMap(Stations(1));
-				
+				%testCase.SINRplot = testCase.Channel.plotSINR(testCase.Stations, testCase.Users(1), 30);
 				
 				
 				% Channel with no shadowing

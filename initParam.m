@@ -83,6 +83,7 @@ Param.channel.mode = '3GPP38901';% String to control the channel mode in DL ['wi
 Param.channel.region = 'Urban';% String to control the channel region
 Param.channel.enableFading = true;
 Param.channel.InterferenceType = 'Full'; % ['None', 'Full'] - Full assumes full buffer.
+Param.channel.enableReciprocity = true; % Enable or disable channel reciprocity for small-scale fading between downlink and uplink
 Param.channel.perfectSynchronization = true;
 Param.channel.enableShadowing = true; % Only capable for 3GPP38901
 Param.channel.computeCoverage = false; %Only a visualization feature. Force the recomputation of the coverage, otherwise loaded from file if stored.
