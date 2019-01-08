@@ -113,7 +113,7 @@ classdef Monster3GPP38901 < handle
 			[thermalLossdBm, thermalNoise] = obj.thermalLoss();
 			rxNoiseFloor = thermalLossdBm;
 			SNRdB = obj.TempSignalVariables.RxPower-rxNoiseFloor;
-			SNR = 10^((SNRdB)/10);
+			SNR = 10.^((SNRdB)./10);
 		end
 
 		function [SNR, SINR] = getSNRandSINR(obj, Stations, station, user)
@@ -124,6 +124,19 @@ classdef Monster3GPP38901 < handle
 			obj.TempSignalVariables.RxPower = receivedPower;
 			[SNR, ~, noisePower] = obj.computeSNR();
 			SINR = obj.computeSINR(station, user, Stations, receivedPowerWatt, noisePower, 'downlink');
+			obj.clearTempVariables();
+		end
+
+
+		function receivedPower = getreceivedPowerMatrix(obj, station, user, sampleGrid)
+			% Used for obtaining a SINR estimation of a given position
+			obj.TempSignalVariables.RxWaveform = station.Tx.Waveform; % Temp variable for BW indication
+			obj.TempSignalVariables.RxWaveformInfo = station.Tx.WaveformInfo; % Temp variable for BW indication
+			[receivedPower, receivedPowerWatt] = obj.computeLinkBudgetMatrix(station, user, 'downlink', sampleGrid);
+			%obj.TempSignalVariables.RxPower = receivedPower;
+			%[SNR, ~, noisePower] = obj.computeSNR();
+			%TODO: make computeSINR matrix compatible
+			%SINR = obj.computeSINR(station, user, Stations, receivedPowerWatt, noisePower, 'downlink');
 			obj.clearTempVariables();
 		end
 
@@ -184,10 +197,106 @@ classdef Monster3GPP38901 < handle
 					receivedPower = EIRPdBm-lossdB-Station.Rx.NoiseFigure; %dBm
 			end
 			receivedPowerWatt = 10^((receivedPower-30)/10);
-
 			
 		end
+
+		function [receivedPower, receivedPowerWatt] = computeLinkBudgetMatrix(obj, Station, User, mode, sampleGrid)
+			%Matrix edition:
+
+			%Create 2d an 3d distances from sampleGrid.
+			d2=zeros(length(sampleGrid(1,:)),length(sampleGrid(2,:)));
+			d3=zeros(length(sampleGrid(1,:)),length(sampleGrid(2,:)));
+			EIRPdBm = zeros(length(sampleGrid(1,:)),length(sampleGrid(2,:)));
+			for i=1:length(sampleGrid(1,:))
+				for j=1:length(sampleGrid(2,:))
+					d2(i,j) = obj.Channel.getDistance(Station.Position(1:2),[sampleGrid(1,i) sampleGrid(2,j)]);
+					d3(i,j) = obj.Channel.getDistance(Station.Position,[sampleGrid(1,i) sampleGrid(2,j) User.Position(3)]);
+					EIRPdBm(i,j) = Station.Tx.getEIRPdBm(Station.Position, [sampleGrid(1,i) sampleGrid(2,j)]);
+				end
+			end
+			%distance2d =  obj.Channel.getDistance(TxNode.Position(1:2),RxNode.Position(1:2));
+			%distance3d = obj.Channel.getDistance(TxNode.Position,RxNode.Position);
+
+			switch mode
+			case 'downlink'
+				lossdB = obj.computePathLossMatrix(Station, User, Station.Tx.Freq, d2, d3);
+				%EIRPdBm = Station.Tx.getEIRPdBm(Station.Position, User.Position);
+				%TODO: make Station.Tx.getEIRPdBm produce matrix output instead of work around
+				%Work around found above in double for loop
+
+				receivedPower = EIRPdBm-lossdB-User.Rx.NoiseFigure; %dBm
+			case 'uplink'
+				lossdB = obj.computePathLossMatrix(Station, User, User.Tx.Freq, d2, d3);
+				
+				EIRPdBm = User.Tx.getEIRPdBm;
+				
+				receivedPower = EIRPdBm-lossdB-Station.Rx.NoiseFigure; %dBm
+			end
+			receivedPowerWatt = 10^((receivedPower-30)/10);
+
+		end
 		
+
+		function [lossdB] = computePathLossMatrix(obj,TxNode, RxNode, Freq, d2, d3)
+
+			f = Freq/10e2; % Frequency in GHz
+			hBs = TxNode.Position(3);
+			hUt = RxNode.Position(3);
+
+			areatype = obj.Channel.getAreaType(TxNode);
+			
+			shadowing = obj.Channel.enableShadowing;
+			avgBuilding = mean(obj.Channel.BuildingFootprints(:,5));
+			avgStreetWidth = obj.Channel.BuildingFootprints(2,2)-obj.Channel.BuildingFootprints(1,4);
+
+			
+			[LOS, prop] = obj.Channel.isLinkLOSMatrix(TxNode, RxNode, false, d2);
+			%TODO make LOS function work for spatialLOSstate
+			%if ~isnan(prop)
+				% LOS state is determined by comparing with spatial map of
+				% random variables, if the probability of determining LOS
+				% is used.
+				%LOS = obj.spatialLOSstate(TxNode, RxNode.Position, prop);
+			%end
+
+
+			try
+				lossdB = loss3gpp38901(areatype, d2, d3, f, hBs, hUt, avgBuilding, avgStreetWidth, LOS);
+			catch ME
+				if strcmp(ME.identifier,'Pathloss3GPP:Range')
+						d2(d2<10) = 10;
+						lossdB = loss3gpp38901(areatype, d2, d3, f, hBs, hUt, avgBuilding, avgStreetWidth, LOS);
+				end
+			end
+
+			%TODO: make this part matrix compatible
+			% if RxNode.Mobility.Indoor
+			% 	% Low loss model consists of LOS
+			% 	materials = {'StandardGlass', 'Concrete'; 0.3, 0.7};
+			% 	sigma_P = 4.4;
+				
+			% 	% High loss model consists of
+			% 	%materials = {'IIRGlass', 'Concrete'; 0.7, 0.3}
+			% 	%sigma_P = 6.5;
+				
+			% 	PL_tw = buildingloss3gpp38901(materials, f);
+				
+			% 	% If indoor depth can be computed
+			% 	%PL_in = indoorloss3gpp38901('', 2d_in);
+			% 	% Otherwise sample from uniform
+			% 	PL_in  = indoorloss3gpp38901(areatype);
+			% 	indoorLosses = PL_tw + PL_in + randn(1, 1)*sigma_P;
+			% 	lossdB = lossdB + indoorLosses;
+			% end
+			
+			%TODO: make computeShadowingLoss compatible with matrices.
+			%if shadowing
+			%	XCorr = obj.computeShadowingLoss(TxNode, RxNode.Position, LOS);
+			%	lossdB = lossdB + XCorr;
+			%end
+
+
+		end
 		
 		function [lossdB] = computePathLoss(obj, TxNode, RxNode, Freq)
 			% Computes path loss. uses the following parameters
@@ -211,7 +320,7 @@ classdef Monster3GPP38901 < handle
 			
 			areatype = obj.Channel.getAreaType(TxNode);
 			seed = obj.Channel.getLinkSeed(RxNode, TxNode);
-			[LOS, prop] = obj.Channel.isLinkLOS(TxNode, RxNode, false);
+			[LOS, prop] = obj.Channel.isLinkLOS(TxNode, RxNode, false );
 			if ~isnan(prop)
 				% LOS state is determined by comparing with spatial map of
 				% random variables, if the probability of determining LOS
@@ -224,7 +333,7 @@ classdef Monster3GPP38901 < handle
 			avgBuilding = mean(obj.Channel.BuildingFootprints(:,5));
 			avgStreetWidth = obj.Channel.BuildingFootprints(2,2)-obj.Channel.BuildingFootprints(1,4);
 			try
-			lossdB = loss3gpp38901(areatype, distance2d, distance3d, f, hBs, hUt, avgBuilding, avgStreetWidth, LOS);
+				lossdB = loss3gpp38901(areatype, distance2d, distance3d, f, hBs, hUt, avgBuilding, avgStreetWidth, LOS);
 			catch ME
 				if strcmp(ME.identifier,'Pathloss3GPP:Range')
 						minRange = 10;
@@ -486,6 +595,22 @@ classdef Monster3GPP38901 < handle
 			end
 			
 		end
+
+		function LOS = spatialLOSstateMatrix(obj, station, userPosition, LOSprop)
+			% Determine spatial LOS state by realizing random variable from
+			% spatial correlated map and comparing to LOS probability. Done
+			% according to 7.6.3.3
+			config = obj.findStationConfig(station);
+			map = config.SpatialMaps.LOSprop;
+			axisXY = config.SpatialMaps.axisLOSprop;
+			LOSrealize = interp2(axisXY(1,:), axisXY(2,:), map, userPosition(1), userPosition(2), 'spline');
+			if LOSrealize < LOSprop
+				LOS = 1;
+			else
+				LOS = 0;
+			end
+			
+		end
 		
 		function XCorr = computeShadowingLoss(obj, station, userPosition, LOS)
 			% Interpolation between the random variables initialized
@@ -617,6 +742,87 @@ classdef Monster3GPP38901 < handle
 			
 		end
 		
+		function [LOS, varargout] = LOSprobabilityMatrix(Channel, Station, User, dist2d)
+			% LOS probability using table 7.4.2-1 of 3GPP TR 38.901
+			areaType = Channel.getAreaType(Station);
+			%dist2d = Channel.getDistance(Station.Position(1:2), User.Position(1:2));
+			
+			% TODO: make this a simplified function 
+			switch areaType
+				case 'RMa'
+					%if dist2d <= 10
+					%	prop = 1;
+					%else
+					%	prop = exp(-1*((dist2d-10)/1000));
+					%end
+
+					prop = dist2d;
+					prop(prop<=10)=1;
+					prop(prop~=1)= exp(-1*((prop(prop~=1)-10)/1000));
+					
+				case 'UMi'
+					%if dist2d <= 18
+					%	prop = 1;
+					%else
+					%	prop = 18/dist2d + exp(-1*((dist2d)/36))*(1-(18/dist2d));
+					%end
+
+					prop = dist2d;
+					prop(prop<=18)=1;
+					prop(prop~=1)=18./prop(prop~=1)+ exp(-1*((prop(prop~=1))/36)).*(1-(18./prop(prop~=1)));
+					
+				case 'UMa'
+					%if dist2d <= 18
+					%	prop = 1;
+					%else
+					%	if User.Position(3) <= 13
+					%		C = 0;
+					%	elseif (User.Position(3) > 13) && (User.Position(3) <= 23)
+					%		C = ((User.Position(3)-13)/10)^(1.5);
+					%	else
+					%		sonohilog('Error in computing LOS. Height out of range','ERR');
+					%	end
+					%	prop = (18/dist2d + exp(-1*((dist2d)/63))*(1-(18/dist2d)))*(1+C*(5/4)*(dist2d/100)^3*exp(-1*(dist2d/150)));
+					%end
+
+					if User.Position(3) >23
+						sonohilog('Error in computing LOS. Height out of range','ERR');
+					end
+
+					prop = dist2d;
+					prop(prop<=18)=1;
+					prop(prop~=1 & User.Position(3) <= 13) = (18./prop(prop~=1 & User.Position(3) <= 13) + exp(-1*((prop(prop~=1 & User.Position(3) <= 13))/63)).*(1-(18./prop(prop~=1 & User.Position(3) <= 13))));
+					prop(prop~=1 & User.Position(3) > 13 & User.Position(3) <= 23) = (18./prop(prop~=1 & User.Position(3) > 13 & User.Position(3) <= 23) + exp(-1*((prop(prop~=1 & User.Position(3) > 13 & User.Position(3) <= 23))/63)).*(1-(18./prop(prop~=1 & User.Position(3) > 13 & User.Position(3) <= 23)))).*(1+((User.Position(3)-13)/10).^(1.5)*(5/4)*(prop(prop~=1 & User.Position(3) > 13 & User.Position(3) <= 23)/100).^3.*exp(-1*(prop(prop~=1 & User.Position(3) > 13 & User.Position(3) <= 23)/150)));
+					
+				otherwise
+					sonohilog(sprintf('AreaType: %s not valid for the LOSMethod %s',areaType, Channel.LOSMethod),'ERR');
+					
+			end
+			
+			x = rand(length(prop(:,1)),length(prop(1,:)));
+			if x > prop
+				LOS = 0;
+			else
+				LOS = 1;
+			end
+
+			LOS = prop;
+			LOS(x>LOS) = 0;
+			LOS(LOS~= 0) =1;
+			
+			
+			if nargout > 1
+				varargout{1} = prop;
+				varargout{2} = x;
+				varargout{3} = dist2d;
+			end
+			
+		end
+
+
+
+
+
 	end
 	
 	

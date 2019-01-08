@@ -27,7 +27,7 @@ Param.numSubFramesMacro = 50;% Integer used to set the number of RBs for a macro
 Param.numSubFramesMicro = 25;% Integer used to set the number of RBs for a micro eNodeB
 Param.numSubFramesPico = 6;% Integer used to set the number of RBs for a pico eNodeB
 Param.numSubFramesUE = 25;% Integer used to set the number of RBs for the uplink
-Param.numMacro = 3;% Integer used to specify the number of macro eNodeBs in the scenario (currently only 1)
+Param.numMacro = 1;% Integer used to specify the number of macro eNodeBs in the scenario (currently only 1)
 Param.macroHeight = 35;% Double used to specify the height in metres of the macro eNodeBs
 Param.numMicro = 0;% Integer used to specify the number of micro eNodeBs in the scenario (currently max 12 if hexagonal is chosen)
 Param.microPos = 'hexagonal'; % Array of char to decide the positioning of the micro BS (uniform, random, clusterized, hexagonal)
@@ -39,7 +39,7 @@ Param.picoPos = 'uniform'; % Array of char to decide the positioning of the micr
 Param.picoUniformRadius = 200;% Double radius of distance from centre for picoBS in metres
 Param.picoHeight = 5;% Double used to specify the height in metres of the pico eNodeBs
 Param.numEnodeBs = Param.numMacro + Param.numMicro + Param.numPico;
-Param.posScheme = '3GPP TR 38.901 UMa' % Array of char describing if a standard scheme/scenario should be used 
+Param.posScheme = '3GPP TR 38.901 UMa'; % Array of char describing if a standard scheme/scenario should be used 
 				%['3GPP TR 38.901 UMa', '3GPP TR 38.901 RMa', 'ITU-R M.2412-0 5.B.C', 'ITU-R M2412-0 5.C.A', 'Single Cell'] leave empty for no scenario
 Param.ueHeight = 1.5;% Double used to specify the height in metres of the UEs
 Param.numUsers = 2;% Integer used for the number of UEs
