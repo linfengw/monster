@@ -41,6 +41,7 @@ classdef MonsterConfig < matlab.mixin.Copyable
 		Arq = struct();
 		Plot = struct();
 		Scenario = struct();
+		Backhaul = struct();
 	end
 
 	methods
@@ -95,7 +96,7 @@ classdef MonsterConfig < matlab.mixin.Copyable
 			obj.MacroEnb = MacroEnb;
 
 			MicroEnb = struct();
-			MicroEnb.number = 1;
+			MicroEnb.number = 0;
 			MicroEnb.numPRBs = 25;
 			MicroEnb.height = 25;
 			MicroEnb.positioning = 'hexagonal';
@@ -107,7 +108,7 @@ classdef MonsterConfig < matlab.mixin.Copyable
 			obj.MicroEnb = MicroEnb;
 
 			PicoEnb = struct();
-			PicoEnb.number = 1;
+			PicoEnb.number = 0;
 			PicoEnb.numPRBs = 6;
 			PicoEnb.height = 5;
 			PicoEnb.positioning = 'uniform';
@@ -135,6 +136,14 @@ classdef MonsterConfig < matlab.mixin.Copyable
 			Mobility.seed = 19;
 			obj.Mobility = Mobility;
 
+			% Properties related to backhaul
+			Backhaul = struct();
+			Backhaul.propagationSpeed = 3*10^8; % [m/s]
+			Backhaul.lengthOfMedium = 1000; % [m]
+			Backhaul.bandwidth = 1000000; % [bps] 
+			Backhaul.utilizationLimit = 0.8; %A value of 1 gives 100% of the medium can be used for dataplane traffic.
+			obj.Backhaul = Backhaul;
+
 			% Properties related to handover
 			Handover = struct();
 			Handover.x2Timer = 0.01;
@@ -155,9 +164,9 @@ classdef MonsterConfig < matlab.mixin.Copyable
 
 			% Properties related to the traffic
 			Traffic = struct();
-			Traffic.primary = 'videoStreaming';
+			Traffic.primary = 'fullBuffer';
 			Traffic.secondary = 'videoStreaming';
-			Traffic.mix = 0.5;
+			Traffic.mix = 0;
 			Traffic.arrivalDistribution = 'Poisson';
 			Traffic.poissonLambda = 5;
 			Traffic.uniformRange = [6, 10];

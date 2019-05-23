@@ -15,6 +15,7 @@ classdef Monster < matlab.mixin.Copyable
 		Channel;
 		Traffic;
 		Results;
+		Backhaul;
 	end
 
 	methods 
@@ -75,13 +76,18 @@ classdef Monster < matlab.mixin.Copyable
 			monsterLog('(MONSTER - setupSimulation) setting up simulation metrics recorder', 'NFO');
 			Results = setupResults(Config);
 
+			%Setup Backhaul
+			monsterLog('(MONSTER - setupSimulation) setting up simulation backhaul','NFO');
+			Backhaul = setupBackhaulAggregation(Stations, Traffic, Config);
+
 			% Assign the properties to the Monster object
 			obj.Config = Config;
 			obj.Stations = Stations;
 			obj.Users = Users;
 			obj.Channel = Channel;
 			obj.Traffic = Traffic;
-			obj.Results = Results;			
+			obj.Results = Results;		
+			obj.Backhaul = Backhaul;	
 		end
 		
 		function obj = setupRound(obj, iRound)
@@ -156,6 +162,9 @@ classdef Monster < matlab.mixin.Copyable
 
 			monsterLog('(MONSTER - collectResults) UE metrics recording', 'NFO');
 			obj.Results = obj.Results.recordUeMetrics(obj.Users, obj.Config.Runtime.currentRound);
+
+			monsterLog('(MONSTER - collectResults) Backhaul metrics recording', 'NFO');
+			obj.Results = obj.Results.recordBackhaulMetrics(obj.Backhaul, obj.Config.Runtime.currentRound);
 		
 		end
 
@@ -201,9 +210,30 @@ classdef Monster < matlab.mixin.Copyable
 			% updateUsersQueues is used to update the transmission queues for a UE based on the current simulation time
 			% 
 			% :obj: Monster instance
-			for iUser = 1: obj.Config.Ue.number
-				UeTrafficGenerator = obj.Traffic([obj.Traffic.Id] == obj.Users(iUser).Traffic.generatorId);
-				obj.Users(iUser).Queue = UeTrafficGenerator.updateTransmissionQueue(obj.Users(iUser), obj.Config.Runtime.currentTime);
+
+			% Backhaul limits define which users have acces to data and how much
+			% Find users associated with each eNB and aggregate their traffic.
+			for iStation = 1:(obj.Config.MacroEnb.number+obj.Config.MicroEnb.number)
+				Users = zeros(1,obj.Config.Ue.number);
+				%Find associated UEs
+				for iUser = 1: obj.Config.Ue.number
+					if obj.Stations(iStation).Users(iUser).UeId > 0
+						Users(iUser) = obj.Stations(iStation).Users(iUser).UeId;
+					end
+				end
+				Users = Users(Users > 0); %UserIDs of UEs associated with the eNB
+
+
+				%Apply delay
+				obj.Backhaul(iStation).updateAllQueues(obj.Users(Users), obj.Config.Runtime.currentTime);
+
+				%Update the transmission for users 
+				for iUser = 1: length(Users)
+					%UeTrafficGenerator = obj.Traffic([obj.Traffic.Id] == obj.Users(Users(iUser)).Traffic.generatorId);
+					%obj.Users(Users(iUser)).Queue = UeTrafficGenerator.updateTransmissionQueue(obj.Users(Users(iUser)), obj.Config.Runtime.currentTime);
+					obj.Users(Users(iUser)).Queue = obj.Backhaul(iStation).Queues(iUser);
+				end
+				
 			end
 		end
 
